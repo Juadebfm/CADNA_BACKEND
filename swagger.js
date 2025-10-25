@@ -17,7 +17,7 @@ const options = {
       {
         url: "https://cadna-backend.onrender.com",
         description: "Production server",
-      },
+      }
     ],
     components: {
       securitySchemes: {
