@@ -9,12 +9,16 @@ import redis from '../db/redis.js';
 // @access  Private
 export const getExamSession = asyncHandler(async (req, res) => {
   // Try Redis first (if available)
-  const cached = await redis.get(`exam_session:${req.params.id}`);
-  if (cached) {
-    return res.json({
-      success: true,
-      data: JSON.parse(cached)
-    });
+  try {
+    const cached = await redis.get(`exam_session:${req.params.id}`);
+    if (cached) {
+      return res.json({
+        success: true,
+        data: JSON.parse(cached)
+      });
+    }
+  } catch (error) {
+    // Redis unavailable, continue with database
   }
 
   const session = await ExamSession.findById(req.params.id)
@@ -92,7 +96,11 @@ export const submitAnswer = asyncHandler(async (req, res) => {
   await session.save();
 
   // Update Redis cache (if available)
-  await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
+  try {
+    await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
+  } catch (error) {
+    // Redis unavailable, continue without caching
+  }
 
   res.json({
     success: true,
@@ -139,7 +147,11 @@ export const submitExam = asyncHandler(async (req, res) => {
   await session.save();
 
   // Clear Redis cache (if available)
-  await redis.del(`exam_session:${session._id}`);
+  try {
+    await redis.del(`exam_session:${session._id}`);
+  } catch (error) {
+    // Redis unavailable, continue without cache clearing
+  }
 
   res.json({
     success: true,
@@ -179,7 +191,11 @@ export const autoSubmitExam = asyncHandler(async (req, res) => {
   await session.save();
 
   // Clear Redis cache (if available)
-  await redis.del(`exam_session:${session._id}`);
+  try {
+    await redis.del(`exam_session:${session._id}`);
+  } catch (error) {
+    // Redis unavailable, continue without cache clearing
+  }
 
   res.json({
     success: true,
