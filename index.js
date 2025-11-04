@@ -26,24 +26,6 @@ app.use(cookieParser());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Health check endpoint
- *     description: Returns a message indicating the API is running
- *     responses:
- *       200:
- *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: CADNA Backend API is running!
- */
 app.get("/", (req, res) => {
   res.json({ message: "CADNA Backend API is running!" });
 });
