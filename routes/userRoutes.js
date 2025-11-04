@@ -99,7 +99,9 @@ router.get('/:id', protect, getUserProfile);
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               firstName:
+ *                 type: string
+ *               lastName:
  *                 type: string
  *               phone:
  *                 type: string

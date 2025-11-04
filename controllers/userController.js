@@ -52,7 +52,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   }
 
   // Fields that can be updated
-  const allowedFields = ['name', 'phone', 'university', 'studentId'];
+  const allowedFields = ['firstName', 'lastName', 'phone', 'university', 'studentId'];
   const updateData = {};
 
   allowedFields.forEach(field => {

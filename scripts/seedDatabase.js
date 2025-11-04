@@ -20,7 +20,8 @@ const seedDatabase = async () => {
 
     // Create admin user
     const admin = await User.create({
-      name: "Admin User",
+      firstName: "Admin",
+      lastName: "User",
       email: "admin@cadna.com",
       phone: "+1234567890",
       password: "admin123",
@@ -30,7 +31,8 @@ const seedDatabase = async () => {
 
     // Create instructor
     const instructor = await User.create({
-      name: "John Instructor",
+      firstName: "John",
+      lastName: "Instructor",
       email: "instructor@cadna.com",
       phone: "+1234567891",
       password: "instructor123",
@@ -41,7 +43,8 @@ const seedDatabase = async () => {
     // Create students
     const students = await User.create([
       {
-        name: "Alice Student",
+        firstName: "Alice",
+        lastName: "Student",
         email: "alice@student.com",
         phone: "+1234567892",
         password: "student123",
@@ -50,7 +53,8 @@ const seedDatabase = async () => {
         studentId: "STU001",
       },
       {
-        name: "Bob Student",
+        firstName: "Bob",
+        lastName: "Student",
         email: "bob@student.com",
         phone: "+1234567893",
         password: "student123",
