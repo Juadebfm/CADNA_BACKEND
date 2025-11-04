@@ -19,7 +19,7 @@ export const getExamSession = asyncHandler(async (req, res) => {
 
   const session = await ExamSession.findById(req.params.id)
     .populate('exam', 'title settings')
-    .populate('student', 'name email');
+    .populate('student', 'firstName lastName email');
 
   if (!session) {
     return res.status(404).json({

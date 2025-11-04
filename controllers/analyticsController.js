@@ -82,7 +82,7 @@ export const getInstructorDashboard = asyncHandler(async (req, res) => {
   // Recent activity
   const recentSessions = await ExamSession.find({ exam: { $in: examIds } })
     .populate('exam', 'title')
-    .populate('student', 'name email')
+    .populate('student', 'firstName lastName email')
     .sort({ createdAt: -1 })
     .limit(10);
 

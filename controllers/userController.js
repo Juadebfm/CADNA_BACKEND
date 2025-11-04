@@ -194,7 +194,8 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   if (role) query.role = role;
   if (search) {
     query.$or = [
-      { name: { $regex: search, $options: 'i' } },
+      { firstName: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
       { email: { $regex: search, $options: 'i' } },
       { university: { $regex: search, $options: 'i' } }
     ];

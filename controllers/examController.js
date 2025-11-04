@@ -19,7 +19,7 @@ export const getExams = asyncHandler(async (req, res) => {
   }
 
   const exams = await Exam.find(query)
-    .populate('instructor', 'name email')
+    .populate('instructor', 'firstName lastName email')
     .select('-questions.correctAnswer')
     .limit(limit * 1)
     .skip((page - 1) * limit)
@@ -46,7 +46,7 @@ export const getExams = asyncHandler(async (req, res) => {
 // @access  Public
 export const getExam = asyncHandler(async (req, res) => {
   const exam = await Exam.findById(req.params.id)
-    .populate('instructor', 'name email')
+    .populate('instructor', 'firstName lastName email')
     .select('-questions.correctAnswer');
 
   if (!exam) {
