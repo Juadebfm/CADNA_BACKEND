@@ -41,7 +41,7 @@ const router = express.Router();
  *         name: search
  *         schema:
  *           type: string
- *         description: Search in name, email, university
+ *         description: Search in firstName, lastName, email, university
  *     responses:
  *       '200':
  *         description: List of users
