@@ -22,6 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+<<<<<<< Updated upstream
 // Connect to database and Redis
 connectDB();
 if (process.env.REDIS_URL) {
@@ -30,6 +31,8 @@ if (process.env.REDIS_URL) {
   console.log("Redis URL not provided, running without Redis caching");
 }
 
+=======
+>>>>>>> Stashed changes
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
@@ -68,6 +71,13 @@ app.use(notFound);
 // Error handling middleware - must be last
 app.use(errorHandler);
 
+// Start HTTP server first
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Connect Redis and MongoDB in background
+(async () => {
+  await connectRedis();
+  await connectDB();
+})();
