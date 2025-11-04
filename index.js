@@ -24,6 +24,7 @@ app.use(cookieParser());
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // Connect to database and Redis
 connectDB();
 if (process.env.REDIS_URL) {
@@ -32,6 +33,8 @@ if (process.env.REDIS_URL) {
   console.log("Redis URL not provided, running without Redis caching");
 }
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
