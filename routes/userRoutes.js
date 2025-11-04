@@ -101,6 +101,8 @@ router.get('/:id', protect, getUserProfile);
  *             properties:
  *               name:
  *                 type: string
+ *               phone:
+ *                 type: string
  *               university:
  *                 type: string
  *               studentId:
