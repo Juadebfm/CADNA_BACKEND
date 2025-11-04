@@ -1,4 +1,4 @@
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
   
   const statusCode = err.statusCode || 500;
@@ -11,11 +11,9 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-const notFound = (req, res, next) => {
+export const notFound = (req, res, next) => {
   res.status(404).json({
     success: false,
     message: 'Route not found'
   });
 };
-
-export { errorHandler, notFound };
