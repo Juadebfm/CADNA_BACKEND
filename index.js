@@ -22,10 +22,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // Connect to database and Redis
 connectDB();
 connectRedis();
 
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
@@ -64,6 +73,13 @@ app.use(notFound);
 // Error handling middleware - must be last
 app.use(errorHandler);
 
+// Start HTTP server first
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Connect Redis and MongoDB in background
+(async () => {
+  await connectRedis();
+  await connectDB();
+})();

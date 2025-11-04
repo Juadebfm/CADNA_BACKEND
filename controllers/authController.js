@@ -54,8 +54,16 @@ function getTtlSecondsFromToken(token) {
  */
 export const register = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, phone, password, role = 'student', university, studentId } = req.body;
-  if (!firstName || !lastName || !email || !phone || !password) {
-    return res.status(400).json({ success:false, message:'Missing required fields', data:null });
+  
+  const missing = [];
+  if (!firstName) missing.push('firstName');
+  if (!lastName) missing.push('lastName');
+  if (!email) missing.push('email');
+  if (!phone) missing.push('phone');
+  if (!password) missing.push('password');
+  
+  if (missing.length > 0) {
+    return res.status(400).json({ success:false, message:`Missing required fields: ${missing.join(', ')}`, data:null });
   }
 
   const existing = await User.findOne({ email });
