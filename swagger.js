@@ -33,7 +33,8 @@ const options = {
           type: "object",
           properties: {
             id: { type: "string" },
-            name: { type: "string" },
+            firstName: { type: "string" },
+            lastName: { type: "string" },
             email: { type: "string" },
             phone: { type: "string" },
             role: { type: "string", enum: ["student", "instructor", "admin"] },

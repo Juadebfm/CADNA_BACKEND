@@ -24,11 +24,7 @@ app.use(cookieParser());
 
 // Connect to database and Redis
 connectDB();
-if (process.env.REDIS_URL) {
-  connectRedis();
-} else {
-  console.log("Redis URL not provided, running without Redis caching");
-}
+connectRedis();
 
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));

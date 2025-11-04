@@ -41,7 +41,7 @@ const router = express.Router();
  *         name: search
  *         schema:
  *           type: string
- *         description: Search in name, email, university
+ *         description: Search in firstName, lastName, email, university
  *     responses:
  *       '200':
  *         description: List of users
@@ -99,7 +99,9 @@ router.get('/:id', protect, getUserProfile);
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               firstName:
+ *                 type: string
+ *               lastName:
  *                 type: string
  *               phone:
  *                 type: string
