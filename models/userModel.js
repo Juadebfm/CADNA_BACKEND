@@ -13,6 +13,10 @@ const userSchema = mongoose.Schema({
     unique: true,
     lowercase: true
   },
+  phone: {
+    type: String,
+    required: true
+  },
   password: {
     type: String,
     required: true,
@@ -25,11 +29,12 @@ const userSchema = mongoose.Schema({
   },
   university: {
     type: String,
-    required: true
+    required: false
   },
   studentId: {
     type: String,
-    sparse: true
+    sparse: true,
+    required: false
   },
   isActive: {
     type: Boolean,

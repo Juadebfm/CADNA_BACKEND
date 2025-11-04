@@ -35,6 +35,7 @@ const options = {
             id: { type: "string" },
             name: { type: "string" },
             email: { type: "string" },
+            phone: { type: "string" },
             role: { type: "string", enum: ["student", "instructor", "admin"] },
             university: { type: "string" },
             studentId: { type: "string" },

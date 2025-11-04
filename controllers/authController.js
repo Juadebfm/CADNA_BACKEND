@@ -53,15 +53,15 @@ function getTtlSecondsFromToken(token) {
  * Registers user and returns access + refresh tokens.
  */
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password, role = 'student', university, studentId } = req.body;
-  if (!name || !email || !password || !university) {
+  const { name, email, phone, password, role = 'student', university, studentId } = req.body;
+  if (!name || !email || !phone || !password) {
     return res.status(400).json({ success:false, message:'Missing required fields', data:null });
   }
 
   const existing = await User.findOne({ email });
   if (existing) return res.status(409).json({ success:false, message:'Email already in use', data:null });
 
-  const user = await User.create({ name, email, password, role, university, studentId });
+  const user = await User.create({ name, email, phone, password, role, university, studentId });
   const accessToken = signAccessToken(user._id.toString(), user.role);
   const refreshToken = signRefreshToken(user._id.toString());
   user.refreshToken = refreshToken;
@@ -69,7 +69,7 @@ export const register = asyncHandler(async (req, res) => {
 
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
 
-  const safeUser = { id:user._id, name:user.name, email:user.email, role:user.role, university:user.university, studentId:user.studentId };
+  const safeUser = { id:user._id, name:user.name, email:user.email, phone:user.phone, role:user.role, university:user.university, studentId:user.studentId };
   return res.status(201).json({ success:true, message:'Registered', data:{ user: safeUser, accessToken } });
 });
 
@@ -102,7 +102,7 @@ export const login = asyncHandler(async (req, res) => {
   await user.save();
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
 
-  const safeUser = { id:user._id, name:user.name, email:user.email, role:user.role, university:user.university, studentId:user.studentId };
+  const safeUser = { id:user._id, name:user.name, email:user.email, phone:user.phone, role:user.role, university:user.university, studentId:user.studentId };
   return res.json({ success:true, message:'Logged in', data:{ user: safeUser, accessToken } });
 });
 
@@ -143,7 +143,7 @@ export const verify2faLogin = asyncHandler(async (req, res) => {
   await user.save();
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
 
-  const safeUser = { id:user._id, name:user.name, email:user.email, role:user.role, university:user.university, studentId:user.studentId };
+  const safeUser = { id:user._id, name:user.name, email:user.email, phone:user.phone, role:user.role, university:user.university, studentId:user.studentId };
   return res.json({ success:true, message:'2FA verified, logged in', data:{ user: safeUser, accessToken } });
 });
 
@@ -263,6 +263,6 @@ export const logout = asyncHandler(async (req, res) => {
 
 export const me = asyncHandler(async (req, res) => {
   if (!req.user) return res.status(401).json({ success:false, message:'Not authenticated', data:null });
-  const safeUser = { id:req.user._id, name:req.user.name, email:req.user.email, role:req.user.role, university:req.user.university, studentId:req.user.studentId, twoFAEnabled:req.user.twoFAEnabled };
+  const safeUser = { id:req.user._id, name:req.user.name, email:req.user.email, phone:req.user.phone, role:req.user.role, university:req.user.university, studentId:req.user.studentId, twoFAEnabled:req.user.twoFAEnabled };
   return res.json({ success:true, data:safeUser });
 });

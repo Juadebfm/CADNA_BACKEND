@@ -21,10 +21,11 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, email, password, university]
+ *             required: [name, email, phone, password]
  *             properties:
  *               name:   { type: string }
  *               email:  { type: string }
+ *               phone:  { type: string }
  *               password: { type: string }
  *               role:   { type: string, example: "student" }
  *               university: { type: string }
