@@ -44,6 +44,15 @@ app.get("/", (req, res) => {
   res.json({ message: "CADNA Backend API is running!" });
 });
 
+app.get("/health", (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({ 
+    status: 'ok', 
+    database: dbStatus,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use("/api/auth", ensureDBConnection, authRoutes);
 app.use("/api/exams", ensureDBConnection, examRoutes);
 app.use("/api/exam-sessions", ensureDBConnection, examSessionRoutes);
@@ -64,8 +73,24 @@ app.listen(PORT, () => {
   console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
 });
 
-// Connect databases in background
+// Connect databases in background with retries
 (async () => {
-  await connectRedis().catch(err => console.warn('Redis failed:', err.message));
-  await connectDB().catch(err => console.warn('MongoDB failed:', err.message));
+  // Redis connection (non-critical)
+  connectRedis().catch(err => console.warn('Redis failed:', err.message));
+  
+  // MongoDB connection with retries
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      await connectDB();
+      break;
+    } catch (err) {
+      console.warn(`MongoDB connection attempt ${4-retries} failed:`, err.message);
+      retries--;
+      if (retries > 0) {
+        console.log(`Retrying in 5 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+  }
 })();
