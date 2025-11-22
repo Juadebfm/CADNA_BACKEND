@@ -3,6 +3,7 @@ import ExamSession from '../models/examSessionModel.js';
 import Exam from '../models/examModel.js';
 import Result from '../models/resultModel.js';
 import redis from '../db/redis.js';
+import { createEvent } from './eventController.js';
 
 // @desc    Get exam session
 // @route   GET /api/exam-sessions/:id
@@ -39,6 +40,12 @@ export const getExamSession = asyncHandler(async (req, res) => {
       message: 'Not authorized to access this session'
     });
   }
+
+  // Log view event
+  await createEvent(req.user._id, 'view_question', {
+    examId: session.exam._id,
+    sessionId: session._id
+  });
 
   res.json({
     success: true,
@@ -95,6 +102,14 @@ export const submitAnswer = asyncHandler(async (req, res) => {
 
   await session.save();
 
+  // Log answer event
+  await createEvent(req.user._id, 'answer_question', {
+    examId: session.exam,
+    sessionId: session._id,
+    questionId,
+    data: { answer, timeTakenSeconds: timeSpent, flagged }
+  });
+
   // Update Redis cache (if available)
   try {
     await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
@@ -145,6 +160,12 @@ export const submitExam = asyncHandler(async (req, res) => {
   }
 
   await session.save();
+
+  // Log submit event
+  await createEvent(req.user._id, 'submit_exam', {
+    examId: session.exam._id,
+    sessionId: session._id
+  });
 
   // Clear Redis cache (if available)
   try {
@@ -230,6 +251,13 @@ export const flagSuspiciousActivity = asyncHandler(async (req, res) => {
   session.aiAnalysis.riskScore = Math.min(100, (session.aiAnalysis.riskScore || 0) + riskIncrease);
 
   await session.save();
+
+  // Log anti-cheating event
+  await createEvent(req.user._id, 'anti_cheating_flag', {
+    examId: session.exam,
+    sessionId: session._id,
+    data: { activityType, severity }
+  });
 
   res.json({
     success: true,
