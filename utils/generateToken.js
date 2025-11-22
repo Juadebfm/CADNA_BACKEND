@@ -3,12 +3,12 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const { JWT_SECRET, JWT_EXPIRES = '15m', REFRESH_EXPIRES = '7d' } = process.env;
+const { JWT_SECRET, JWT_EXPIRES = '3h', REFRESH_EXPIRES = '24h' } = process.env;
 if (!JWT_SECRET) throw new Error('Missing JWT_SECRET');
 
-export const signAccessToken = (userId, role) => {
+export const signAccessToken = (userId, role, customExpiry = null) => {
   return jwt.sign({ sub: userId, role }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES,
+    expiresIn: customExpiry || JWT_EXPIRES,
     jwtid: crypto.randomUUID(),
   });
 };

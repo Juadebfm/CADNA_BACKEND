@@ -5,7 +5,13 @@ let isConnected = false;
 
 const createRedisClient = () => {
   const redisClient = createClient({
-    url: process.env.REDIS_URL,
+    username: 'default',
+    password: 'PbyPH7jD1i6pMY5rBhJB8nGPUu9PgSM8',
+    socket: {
+      host: 'redis-10253.c241.us-east-1-4.ec2.cloud.redislabs.com',
+      port: 10253,
+      reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+    }
   });
 
   redisClient.on("error", (err) => {

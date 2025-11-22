@@ -4,6 +4,7 @@ import {
   setup2fa, verify2faEnable, disable2fa,
   refresh, logout, me
 } from '../controllers/authController.js';
+import { extendExamToken } from '../controllers/examTokenController.js';
 import { protect } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
@@ -237,5 +238,31 @@ router.post('/logout', logout);
  *         description: Not authenticated
  */
 router.get('/me', protect, me);
+
+/**
+ * @openapi
+ * /api/auth/extend-exam-token:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Extend token during active exam session
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [sessionId]
+ *             properties:
+ *               sessionId: { type: string }
+ *     responses:
+ *       '200':
+ *         description: Token extended successfully
+ *       '400':
+ *         description: Invalid session or not active
+ */
+router.post('/extend-exam-token', protect, extendExamToken);
 
 export default router;

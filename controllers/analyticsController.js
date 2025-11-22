@@ -4,6 +4,7 @@ import ExamSession from '../models/examSessionModel.js';
 import Result from '../models/resultModel.js';
 import Exam from '../models/examModel.js';
 import User from '../models/userModel.js';
+import Event from '../models/eventModel.js';
 
 // @desc    Get exam analytics
 // @route   GET /api/analytics/exam/:examId
@@ -234,7 +235,7 @@ export const generateExamAnalytics = asyncHandler(async (examId) => {
   const passRate = results.length > 0 ? 
     (results.filter(r => r.score.passed).length / results.length) * 100 : 0;
 
-  // Question analysis
+  // Enhanced question analysis using events
   const questionAnalysis = [];
   for (const question of exam.questions) {
     const questionAnswers = completedSessions.flatMap(s => 
@@ -244,14 +245,28 @@ export const generateExamAnalytics = asyncHandler(async (examId) => {
     const correctAnswers = questionAnswers.filter(a => a.isCorrect).length;
     const totalAnswers = questionAnswers.length;
     
+    // Get events for this question
+    const questionEvents = await Event.find({
+      examId,
+      questionId: question._id,
+      eventType: { $in: ['view_question', 'answer_question', 'flag_question'] }
+    });
+    
+    const flagCount = questionEvents.filter(e => e.eventType === 'flag_question').length;
+    const avgTimeFromEvents = questionEvents
+      .filter(e => e.data?.timeTakenSeconds)
+      .reduce((sum, e, _, arr) => sum + e.data.timeTakenSeconds / arr.length, 0);
+    
     questionAnalysis.push({
       questionId: question._id,
       correctAnswers,
       totalAnswers,
       successRate: totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0,
-      averageTimeSpent: questionAnswers.length > 0 ? 
-        questionAnswers.reduce((sum, a) => sum + (a.timeSpent || 0), 0) / questionAnswers.length : 0,
-      difficulty: question.difficulty
+      averageTimeSpent: avgTimeFromEvents || (questionAnswers.length > 0 ? 
+        questionAnswers.reduce((sum, a) => sum + (a.timeSpent || 0), 0) / questionAnswers.length : 0),
+      difficulty: question.difficulty,
+      flagCount,
+      cheatingRisk: flagCount > 0 ? Math.min(flagCount * 0.1, 1) : 0
     });
   }
 
