@@ -34,8 +34,7 @@ const userEngagementSchema = mongoose.Schema({
   timestamps: true
 });
 
-userEngagementSchema.index({ userId: 1, timestamp: -1 });
-userEngagementSchema.index({ examId: 1, engagementType: 1 });
+userEngagementSchema.index({ userId: 1, examId: 1, timestamp: -1 });
 
 const UserEngagement = mongoose.model('UserEngagement', userEngagementSchema);
 export default UserEngagement;

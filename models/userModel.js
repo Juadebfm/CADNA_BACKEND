@@ -38,7 +38,6 @@ const userSchema = mongoose.Schema({
   },
   studentId: {
     type: String,
-    sparse: true,
     required: false
   },
   isActive: {
@@ -76,6 +75,9 @@ userSchema.methods.comparePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
 
+// Disable buffering for this model
+userSchema.set('bufferCommands', false);
+
 const User = mongoose.model('User', userSchema);
 
-export default  User;
+export default User;

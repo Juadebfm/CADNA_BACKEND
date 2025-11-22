@@ -67,8 +67,8 @@ const analyticsSchema = mongoose.Schema({
   timestamps: true
 });
 
-analyticsSchema.index({ exam: 1, instructor: 1 });
-analyticsSchema.index({ lastUpdated: -1 });
+analyticsSchema.index({ exam: 1 }, { unique: true });
+analyticsSchema.index({ instructor: 1, lastUpdated: -1 });
 
 const Analytics = mongoose.model('Analytics', analyticsSchema);
 export default Analytics;

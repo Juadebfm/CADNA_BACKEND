@@ -103,7 +103,7 @@ const examSchema = mongoose.Schema({
 });
 
 examSchema.index({ instructor: 1, isActive: 1 });
-examSchema.index({ 'schedule.startDate': 1, 'schedule.endDate': 1 });
+examSchema.index({ isActive: 1, createdAt: -1 });
 
 const Exam = mongoose.model('Exam', examSchema);
 export default Exam;

@@ -12,6 +12,7 @@ import userRoutes from "./routes/userRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import metricsRoutes from "./routes/metricsRoutes.js";
+import { ensureDBConnection } from "./middleware/DatabaseMiddleware.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -20,10 +21,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: true, // Allow all origins for now
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'x-requested-with']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -43,13 +44,13 @@ app.get("/", (req, res) => {
   res.json({ message: "CADNA Backend API is running!" });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/exams", examRoutes);
-app.use("/api/exam-sessions", examSessionRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/events", eventRoutes);
-app.use("/api/metrics", metricsRoutes);
+app.use("/api/auth", ensureDBConnection, authRoutes);
+app.use("/api/exams", ensureDBConnection, examRoutes);
+app.use("/api/exam-sessions", ensureDBConnection, examSessionRoutes);
+app.use("/api/users", ensureDBConnection, userRoutes);
+app.use("/api/analytics", ensureDBConnection, analyticsRoutes);
+app.use("/api/events", ensureDBConnection, eventRoutes);
+app.use("/api/metrics", ensureDBConnection, metricsRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);
@@ -57,13 +58,14 @@ app.use(notFound);
 // Error handling middleware - must be last
 app.use(errorHandler);
 
-// Start HTTP server first
+// Start server immediately, connect DBs in background
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
 });
 
-// Connect Redis and MongoDB in background
+// Connect databases in background
 (async () => {
-  await connectRedis();
-  await connectDB();
+  await connectRedis().catch(err => console.warn('Redis failed:', err.message));
+  await connectDB().catch(err => console.warn('MongoDB failed:', err.message));
 })();

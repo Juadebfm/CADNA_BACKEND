@@ -35,8 +35,7 @@ const securityEventSchema = mongoose.Schema({
   timestamps: true
 });
 
-securityEventSchema.index({ userId: 1, timestamp: -1 });
-securityEventSchema.index({ sessionId: 1, eventType: 1 });
+securityEventSchema.index({ sessionId: 1, eventType: 1, timestamp: -1 });
 
 const SecurityEvent = mongoose.model('SecurityEvent', securityEventSchema);
 export default SecurityEvent;

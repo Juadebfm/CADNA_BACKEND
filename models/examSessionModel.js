@@ -72,8 +72,8 @@ const examSessionSchema = mongoose.Schema({
   timestamps: true
 });
 
-examSessionSchema.index({ exam: 1, student: 1 });
-examSessionSchema.index({ status: 1, createdAt: -1 });
+examSessionSchema.index({ exam: 1, student: 1 }, { unique: true });
+examSessionSchema.index({ student: 1, status: 1 });
 
 const ExamSession = mongoose.model('ExamSession', examSessionSchema);
 export default ExamSession;

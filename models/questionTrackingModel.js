@@ -31,8 +31,7 @@ const questionTrackingSchema = mongoose.Schema({
   timestamps: true
 });
 
-questionTrackingSchema.index({ sessionId: 1, questionId: 1 });
-questionTrackingSchema.index({ userId: 1, questionId: 1 });
+questionTrackingSchema.index({ sessionId: 1, questionId: 1 }, { unique: true });
 
 const QuestionTracking = mongoose.model('QuestionTracking', questionTrackingSchema);
 export default QuestionTracking;

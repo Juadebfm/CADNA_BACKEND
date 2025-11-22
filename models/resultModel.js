@@ -63,8 +63,8 @@ const resultSchema = mongoose.Schema({
   timestamps: true
 });
 
-resultSchema.index({ student: 1, exam: 1 });
-resultSchema.index({ 'score.percentage': -1 });
+resultSchema.index({ student: 1, exam: 1 }, { unique: true });
+resultSchema.index({ exam: 1, 'score.percentage': -1 });
 
 const Result = mongoose.model('Result', resultSchema);
 export default Result;
