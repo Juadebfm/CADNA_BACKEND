@@ -29,17 +29,16 @@ const connectDB = async () => {
     });
     
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
+    
+    // Ensure connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error('Connection not ready');
+    }
+    
     return conn;
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
-    
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Production DB connection failed - exiting');
-      process.exit(1);
-    }
-    
-    console.log('⚠️  Running without MongoDB - some features disabled');
-    return null;
+    throw err; // Re-throw to stop server startup
   }
 };
 
