@@ -53,13 +53,13 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.use("/api/auth", ensureDBConnection, authRoutes);
-app.use("/api/exams", ensureDBConnection, examRoutes);
-app.use("/api/exam-sessions", ensureDBConnection, examSessionRoutes);
-app.use("/api/users", ensureDBConnection, userRoutes);
-app.use("/api/analytics", ensureDBConnection, analyticsRoutes);
-app.use("/api/events", ensureDBConnection, eventRoutes);
-app.use("/api/metrics", ensureDBConnection, metricsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/exams", examRoutes);
+app.use("/api/exam-sessions", examSessionRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/metrics", metricsRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);

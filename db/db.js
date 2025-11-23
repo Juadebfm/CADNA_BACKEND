@@ -1,29 +1,27 @@
 import mongoose from 'mongoose';
 
-// Disable buffering globally
+// Disable buffering completely
 mongoose.set('bufferCommands', false);
+mongoose.set('strictQuery', false);
 
 const connectDB = async () => {
   try {
     console.log('Connecting to MongoDB...');
     
     const isProduction = process.env.NODE_ENV === 'production';
-    const timeouts = isProduction ? {
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000
-    } : {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 5000
+    const timeouts = {
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000,
+      socketTimeoutMS: 3000
     };
     
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       ...timeouts,
       bufferCommands: false,
-      maxPoolSize: 10,
+      maxPoolSize: 5,
       retryWrites: true,
-      w: 'majority'
+      w: 'majority',
+      dbName: 'cadna-backend-new'
     });
     
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);

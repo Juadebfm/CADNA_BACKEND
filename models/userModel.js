@@ -77,6 +77,7 @@ userSchema.methods.comparePassword = async function(password) {
 
 // Disable buffering for this model
 userSchema.set('bufferCommands', false);
+userSchema.set('bufferMaxEntries', 0);
 
 const User = mongoose.model('User', userSchema);
 
