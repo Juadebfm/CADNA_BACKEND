@@ -9,10 +9,14 @@ const connectDB = async () => {
     console.log('Connecting to MongoDB...');
     
     const isProduction = process.env.NODE_ENV === 'production';
-    const timeouts = {
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
-      socketTimeoutMS: 3000
+    const timeouts = process.env.NODE_ENV === 'production' ? {
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 30000
+    } : {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000
     };
     
     const conn = await mongoose.connect(process.env.MONGODB_URI, {

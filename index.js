@@ -67,30 +67,24 @@ app.use(notFound);
 // Error handling middleware - must be last
 app.use(errorHandler);
 
-// Start server immediately, connect DBs in background
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
-});
-
-// Connect databases in background with retries
+// Connect to databases first, then start server
 (async () => {
-  // Redis connection (non-critical)
-  connectRedis().catch(err => console.warn('Redis failed:', err.message));
-  
-  // MongoDB connection with retries
-  let retries = 3;
-  while (retries > 0) {
-    try {
-      await connectDB();
-      break;
-    } catch (err) {
-      console.warn(`MongoDB connection attempt ${4-retries} failed:`, err.message);
-      retries--;
-      if (retries > 0) {
-        console.log(`Retrying in 5 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-      }
-    }
+  try {
+    console.log('🔄 Starting CADNA Backend...');
+    
+    // Connect Redis (non-blocking)
+    connectRedis().catch(err => console.warn('Redis failed:', err.message));
+    
+    // Connect MongoDB (blocking)
+    await connectDB();
+    
+    // Start server only after DB is ready
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
   }
 })();
