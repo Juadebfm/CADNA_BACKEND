@@ -10,9 +10,9 @@ const connectDB = async () => {
     
     const isProduction = process.env.NODE_ENV === 'production';
     const timeouts = process.env.NODE_ENV === 'production' ? {
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 30000
+      serverSelectionTimeoutMS: 60000,
+      connectTimeoutMS: 60000,
+      socketTimeoutMS: 60000
     } : {
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
@@ -22,10 +22,12 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       ...timeouts,
       bufferCommands: false,
-      maxPoolSize: 5,
+      maxPoolSize: 10,
+      minPoolSize: 2,
       retryWrites: true,
       w: 'majority',
-      dbName: 'cadna-backend-new'
+      heartbeatFrequencyMS: 10000,
+      maxIdleTimeMS: 30000
     });
     
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
