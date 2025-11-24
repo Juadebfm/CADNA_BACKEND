@@ -1,7 +1,5 @@
 import mongoose from 'mongoose';
 
-// Disable buffering completely
-mongoose.set('bufferCommands', false);
 mongoose.set('strictQuery', false);
 
 const connectDB = async () => {
@@ -21,7 +19,6 @@ const connectDB = async () => {
     
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       ...timeouts,
-      bufferCommands: false,
       maxPoolSize: 10,
       minPoolSize: 2,
       retryWrites: true,
@@ -40,7 +37,14 @@ const connectDB = async () => {
     return conn;
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
-    throw err; // Re-throw to stop server startup
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔄 Retrying connection in 10 seconds...');
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      return connectDB(); // Retry
+    }
+    
+    throw err;
   }
 };
 
