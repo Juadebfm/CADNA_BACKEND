@@ -97,7 +97,17 @@ const examSchema = mongoose.Schema({
     default: true
   },
   category: String,
-  tags: [String]
+  tags: [String],
+  examLink: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  accessCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  }
 }, {
   timestamps: true
 });

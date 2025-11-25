@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Exam from '../models/examModel.js';
 import ExamSession from '../models/examSessionModel.js';
 import redis from '../db/redis.js';
+import crypto from 'crypto';
 
 // @desc    Get all exams
 // @route   GET /api/exams
@@ -68,7 +69,9 @@ export const getExam = asyncHandler(async (req, res) => {
 export const createExam = asyncHandler(async (req, res) => {
   const examData = {
     ...req.body,
-    instructor: req.user._id
+    instructor: req.user._id,
+    examLink: crypto.randomUUID(),
+    accessCode: crypto.randomBytes(4).toString('hex').toUpperCase()
   };
 
   const exam = await Exam.create(examData);
@@ -76,7 +79,10 @@ export const createExam = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: 'Exam created successfully',
-    data: exam
+    data: {
+      ...exam.toObject(),
+      examUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/exam/${exam.examLink}`
+    }
   });
 });
 
@@ -243,5 +249,79 @@ export const startExam = asyncHandler(async (req, res) => {
     success: true,
     message: 'Exam session started',
     data: session
+  });
+});
+
+// @desc    Access exam by link (auto-enrolls authenticated users)
+// @route   GET /api/exams/link/:examLink
+// @access  Public (but auto-enrolls if authenticated)
+export const getExamByLink = asyncHandler(async (req, res) => {
+  const exam = await Exam.findOne({ examLink: req.params.examLink, isActive: true })
+    .populate('instructor', 'firstName lastName email')
+    .select('-questions.correctAnswer');
+
+  if (!exam) {
+    return res.status(404).json({
+      success: false,
+      message: 'Exam not found or inactive'
+    });
+  }
+
+  // Auto-enroll if user is authenticated and not already enrolled
+  if (req.user && !exam.enrolledStudents.includes(req.user._id)) {
+    exam.enrolledStudents.push(req.user._id);
+    await exam.save();
+  }
+
+  res.json({
+    success: true,
+    data: {
+      ...exam.toObject(),
+      examId: exam._id, // Include the actual exam ID for frontend use
+      isEnrolled: req.user ? exam.enrolledStudents.includes(req.user._id) : false
+    }
+  });
+});
+
+// @desc    Enroll in exam by access code
+// @route   POST /api/exams/enroll-code
+// @access  Private (Student)
+export const enrollByAccessCode = asyncHandler(async (req, res) => {
+  const { accessCode } = req.body;
+
+  if (!accessCode) {
+    return res.status(400).json({
+      success: false,
+      message: 'Access code is required'
+    });
+  }
+
+  const exam = await Exam.findOne({ accessCode: accessCode.toUpperCase(), isActive: true });
+
+  if (!exam) {
+    return res.status(404).json({
+      success: false,
+      message: 'Invalid access code'
+    });
+  }
+
+  if (exam.enrolledStudents.includes(req.user._id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Already enrolled in this exam'
+    });
+  }
+
+  exam.enrolledStudents.push(req.user._id);
+  await exam.save();
+
+  res.json({
+    success: true,
+    message: 'Successfully enrolled in exam',
+    data: {
+      examId: exam._id,
+      title: exam.title,
+      description: exam.description
+    }
   });
 });

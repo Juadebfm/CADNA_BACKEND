@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import crypto from "crypto";
 import User from "../models/userModel.js";
 import Exam from "../models/examModel.js";
 
@@ -67,10 +68,15 @@ const seedDatabase = async () => {
     console.log("Created users");
 
     // Create sample exam
+    const examLink = crypto.randomUUID();
+    const accessCode = crypto.randomBytes(4).toString("hex").toUpperCase();
+
     const sampleExam = await Exam.create({
       title: "JavaScript Fundamentals",
       description: "Test your knowledge of JavaScript basics",
       instructor: instructor._id,
+      examLink: examLink,
+      accessCode: accessCode,
       questions: [
         {
           type: "multiple-choice",
@@ -143,12 +149,21 @@ const seedDatabase = async () => {
 
     console.log("Created sample exam");
 
-    console.log("Database seeded successfully!");
-    console.log("Sample credentials:");
+    console.log("\n=== DATABASE SEEDED SUCCESSFULLY! ===");
+    console.log("\n📚 SAMPLE EXAM CREATED:");
+    console.log(`Title: ${sampleExam.title}`);
+    console.log(`Access Code: ${sampleExam.accessCode}`);
+    console.log(`\n🔗 EXAM LINK (Click to access):`);
+    console.log(`http://localhost:5173/exam/${sampleExam.examLink}`);
+    console.log(`\n👥 SAMPLE CREDENTIALS:`);
     console.log("Admin: admin@cadna.com / admin123");
     console.log("Instructor: instructor@cadna.com / instructor123");
     console.log("Student 1: alice@student.com / student123");
     console.log("Student 2: bob@student.com / student123");
+    console.log("\n📋 INSTRUCTIONS:");
+    console.log("1. Login as a student (alice@student.com / student123)");
+    console.log("2. Click the exam link above");
+    console.log("3. You'll be auto-enrolled and can start the exam!");
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {

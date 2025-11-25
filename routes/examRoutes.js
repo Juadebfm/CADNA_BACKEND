@@ -6,7 +6,9 @@ import {
   updateExam,
   deleteExam,
   enrollInExam,
-  startExam
+  startExam,
+  getExamByLink,
+  enrollByAccessCode
 } from '../controllers/examController.js';
 import { protect } from '../middleware/AuthMiddleware.js';
 
@@ -45,6 +47,30 @@ const router = express.Router();
  *         description: List of exams
  */
 router.get('/', getExams);
+
+/**
+ * @openapi
+ * /api/exams/link/{examLink}:
+ *   get:
+ *     tags:
+ *       - Exams
+ *     summary: Access exam by link (auto-enrolls if authenticated)
+ *     parameters:
+ *       - in: path
+ *         name: examLink
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unique exam link
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Exam details (user auto-enrolled if authenticated)
+ *       '404':
+ *         description: Exam not found
+ */
+router.get('/link/:examLink', protect, getExamByLink);
 
 /**
  * @openapi
@@ -225,5 +251,33 @@ router.post('/:id/enroll', protect, enrollInExam);
  *         description: Not enrolled
  */
 router.post('/:id/start', protect, startExam);
+
+/**
+ * @openapi
+ * /api/exams/enroll-code:
+ *   post:
+ *     tags:
+ *       - Exams
+ *     summary: Enroll using access code
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [accessCode]
+ *             properties:
+ *               accessCode:
+ *                 type: string
+ *                 description: 8-character access code
+ *     responses:
+ *       '200':
+ *         description: Successfully enrolled
+ *       '400':
+ *         description: Invalid access code or already enrolled
+ */
+router.post('/enroll-code', protect, enrollByAccessCode);
 
 export default router;
