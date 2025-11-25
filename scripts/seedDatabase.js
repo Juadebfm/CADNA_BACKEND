@@ -10,7 +10,7 @@ const seedDatabase = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
-      dbName: "cadna-backend",
+      dbName: "cadna-backend-new",
     });
     console.log("Connected to MongoDB");
 
