@@ -8,9 +8,15 @@ import crypto from 'crypto';
 // @route   GET /api/exams
 // @access  Public
 export const getExams = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, category, search } = req.query;
+  const { page = 1, limit = 10, category, search, enrolled } = req.query;
   
-  const query = { isActive: true };
+  let query = { isActive: true };
+  
+  // If enrolled=true and user is authenticated, show only enrolled exams
+  if (enrolled === 'true' && req.user) {
+    query.enrolledStudents = req.user._id;
+  }
+  
   if (category) query.category = category;
   if (search) {
     query.$or = [
@@ -31,7 +37,10 @@ export const getExams = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      exams,
+      exams: exams.map(exam => ({
+        ...exam.toObject(),
+        isEnrolled: req.user ? exam.enrolledStudents.includes(req.user._id) : false
+      })),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -42,9 +51,9 @@ export const getExams = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get single exam
+// @desc    Get single exam (for exam access page - enrolled students only)
 // @route   GET /api/exams/:id
-// @access  Public
+// @access  Private (Enrolled students only)
 export const getExam = asyncHandler(async (req, res) => {
   const exam = await Exam.findById(req.params.id)
     .populate('instructor', 'firstName lastName email')
@@ -57,9 +66,20 @@ export const getExam = asyncHandler(async (req, res) => {
     });
   }
 
+  // Check if user is enrolled (for students) or is instructor/admin
+  if (req.user.role === 'student' && !exam.enrolledStudents.includes(req.user._id)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not enrolled in this exam'
+    });
+  }
+
   res.json({
     success: true,
-    data: exam
+    data: {
+      ...exam.toObject(),
+      isEnrolled: req.user ? exam.enrolledStudents.includes(req.user._id) : false
+    }
   });
 });
 
@@ -246,7 +266,11 @@ export const startExam = asyncHandler(async (req, res) => {
   });
 
   // Cache session in Redis for quick access (if available)
-  await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
+  try {
+    await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
+  } catch (redisError) {
+    console.log('Redis cache failed:', redisError.message);
+  }
 
   res.json({
     success: true,
@@ -259,9 +283,7 @@ export const startExam = asyncHandler(async (req, res) => {
 // @route   GET /api/exams/link/:examLink
 // @access  Public (but auto-enrolls if authenticated)
 export const getExamByLink = asyncHandler(async (req, res) => {
-  const exam = await Exam.findOne({ examLink: req.params.examLink, isActive: true })
-    .populate('instructor', 'firstName lastName email')
-    .select('-questions.correctAnswer');
+  const exam = await Exam.findOne({ examLink: req.params.examLink, isActive: true });
 
   if (!exam) {
     return res.status(404).json({
@@ -270,9 +292,24 @@ export const getExamByLink = asyncHandler(async (req, res) => {
     });
   }
 
+  // If user is not authenticated, return basic info for login redirect
+  if (!req.user) {
+    return res.json({
+      success: true,
+      requiresAuth: true,
+      data: {
+        title: exam.title,
+        description: exam.description,
+        examLink: exam.examLink
+      }
+    });
+  }
+
   let autoEnrolled = false;
+  let alreadyEnrolled = exam.enrolledStudents.includes(req.user._id);
+  
   // Auto-enroll if user is authenticated and not already enrolled
-  if (req.user && !exam.enrolledStudents.includes(req.user._id)) {
+  if (!alreadyEnrolled) {
     exam.enrolledStudents.push(req.user._id);
     await exam.save();
     autoEnrolled = true;
@@ -280,12 +317,13 @@ export const getExamByLink = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: autoEnrolled ? 'Successfully enrolled in exam' : undefined,
+    message: autoEnrolled ? 'Successfully enrolled in exam' : 'Already enrolled in exam',
     data: {
-      ...exam.toObject(),
-      examId: exam._id, // Include the actual exam ID for frontend use
-      isEnrolled: req.user ? exam.enrolledStudents.includes(req.user._id) : false,
-      autoEnrolled
+      title: exam.title,
+      description: exam.description,
+      examId: exam._id,
+      autoEnrolled,
+      alreadyEnrolled
     }
   });
 });
@@ -303,7 +341,9 @@ export const enrollByAccessCode = asyncHandler(async (req, res) => {
     });
   }
 
-  const exam = await Exam.findOne({ accessCode: accessCode.toUpperCase(), isActive: true });
+  const exam = await Exam.findOne({ accessCode: accessCode.toUpperCase(), isActive: true })
+    .populate('instructor', 'firstName lastName email')
+    .select('-questions.correctAnswer');
 
   if (!exam) {
     return res.status(404).json({
@@ -322,15 +362,13 @@ export const enrollByAccessCode = asyncHandler(async (req, res) => {
   exam.enrolledStudents.push(req.user._id);
   await exam.save();
 
-  // Populate instructor data for consistent response
-  await exam.populate('instructor', 'firstName lastName email');
-
   res.json({
     success: true,
     message: 'Successfully enrolled in exam',
     data: {
       ...exam.toObject(),
-      examId: exam._id
+      examId: exam._id,
+      isEnrolled: true
     }
   });
 });
