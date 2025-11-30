@@ -73,7 +73,8 @@ const seedDatabase = async () => {
 
     const sampleExam = await Exam.create({
       title: "JavaScript Fundamentals",
-      description: "Test your knowledge of JavaScript basics",
+      description:
+        "Comprehensive test covering JavaScript basics, variables, functions, and DOM manipulation. This exam will assess your understanding of core JavaScript concepts.",
       instructor: instructor._id,
       examLink: examLink,
       accessCode: accessCode,
@@ -125,9 +126,22 @@ const seedDatabase = async () => {
           difficulty: "medium",
           category: "Web APIs",
         },
+        {
+          type: "multiple-choice",
+          question: "Which of the following is NOT a JavaScript data type?",
+          options: [
+            { text: "string", isCorrect: false },
+            { text: "boolean", isCorrect: false },
+            { text: "integer", isCorrect: true },
+            { text: "undefined", isCorrect: false },
+          ],
+          points: 2,
+          difficulty: "medium",
+          category: "Data Types",
+        },
       ],
       settings: {
-        timeLimit: 30,
+        timeLimit: 45,
         passingScore: 70,
         randomizeQuestions: true,
         randomizeOptions: true,
@@ -141,10 +155,10 @@ const seedDatabase = async () => {
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         timezone: "UTC",
       },
-      enrolledStudents: [students[0]._id, students[1]._id],
+      enrolledStudents: [],
       isActive: true,
       category: "Programming",
-      tags: ["javascript", "fundamentals", "web-development"],
+      tags: ["javascript", "fundamentals", "web-development", "programming"],
     });
 
     console.log("Created sample exam");

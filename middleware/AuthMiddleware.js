@@ -67,3 +67,42 @@ export const protect = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+// Optional auth - doesn't fail if no token, just sets req.user if valid token exists
+export const optionalAuth = asyncHandler(async (req, res, next) => {
+  let token = null;
+
+  // Authorization header: "Bearer <token>"
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
+
+  // If no token, continue without user
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  // Blacklist check
+  if (tokenBlacklist.has(token)) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.sub || decoded.id;
+    
+    if (userId) {
+      const user = await User.findById(userId).select('-password');
+      req.user = user;
+    }
+  } catch (err) {
+    // Token invalid, continue without user
+    req.user = null;
+  }
+  
+  return next();
+});

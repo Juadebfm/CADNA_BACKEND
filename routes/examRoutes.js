@@ -10,7 +10,7 @@ import {
   getExamByLink,
   enrollByAccessCode
 } from '../controllers/examController.js';
-import { protect } from '../middleware/AuthMiddleware.js';
+import { protect, optionalAuth } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
 
@@ -70,7 +70,7 @@ router.get('/', getExams);
  *       '404':
  *         description: Exam not found
  */
-router.get('/link/:examLink', protect, getExamByLink);
+router.get('/link/:examLink', optionalAuth, getExamByLink);
 
 /**
  * @openapi
