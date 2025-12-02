@@ -67,7 +67,7 @@ export const getExam = asyncHandler(async (req, res) => {
   }
 
   // Check if user is enrolled (for students) or is instructor/admin
-  if (req.user.role === 'student' && !exam.enrolledStudents.includes(req.user._id)) {
+  if (req.user && req.user.role === 'student' && !exam.enrolledStudents.includes(req.user._id)) {
     return res.status(403).json({
       success: false,
       message: 'Not enrolled in this exam'
