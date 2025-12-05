@@ -110,6 +110,15 @@ export const submitAnswer = asyncHandler(async (req, res) => {
     data: { answer, timeTakenSeconds: timeSpent, flagged }
   });
 
+  // Auto-save progress every answer
+  session.lastActivity = new Date();
+  session.progress = {
+    questionsAnswered: session.answers.length,
+    totalQuestions: session.exam.questions?.length || 0,
+    percentage: session.exam.questions?.length ? 
+      Math.round((session.answers.length / session.exam.questions.length) * 100) : 0
+  };
+
   // Update Redis cache (if available)
   try {
     await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
@@ -223,6 +232,48 @@ export const autoSubmitExam = asyncHandler(async (req, res) => {
     message: 'Exam auto-submitted due to time limit',
     data: session
   });
+});
+
+// @desc    Get user's active sessions for exam
+// @route   GET /api/exam-sessions/user/:examId
+// @access  Private (Student)
+export const getUserSessions = asyncHandler(async (req, res) => {
+  const sessions = await ExamSession.find({
+    exam: req.params.examId,
+    student: req.user._id
+  }).sort({ createdAt: -1 });
+
+  res.json({ success: true, data: sessions });
+});
+
+// @desc    Bulk sync answers
+// @route   POST /api/exam-sessions/:id/sync
+// @access  Private (Student)
+export const syncAnswers = asyncHandler(async (req, res) => {
+  const { answers } = req.body;
+  const session = await ExamSession.findById(req.params.id);
+
+  if (!session || session.student.toString() !== req.user._id.toString()) {
+    return res.status(404).json({ success: false, message: 'Session not found' });
+  }
+
+  // Bulk update answers
+  for (const answer of answers) {
+    const existingIndex = session.answers.findIndex(
+      a => a.questionId.toString() === answer.questionId
+    );
+    
+    if (existingIndex >= 0) {
+      session.answers[existingIndex] = answer;
+    } else {
+      session.answers.push(answer);
+    }
+  }
+
+  session.lastActivity = new Date();
+  await session.save();
+
+  res.json({ success: true, message: 'Answers synced' });
 });
 
 // @desc    Flag suspicious activity

@@ -4,7 +4,9 @@ import {
   submitAnswer,
   submitExam,
   autoSubmitExam,
-  flagSuspiciousActivity
+  flagSuspiciousActivity,
+  getUserSessions,
+  syncAnswers
 } from '../controllers/examSessionController.js';
 import { protect } from '../middleware/AuthMiddleware.js';
 
@@ -35,6 +37,7 @@ const router = express.Router();
  *         description: Session not found
  */
 router.get('/:id', protect, getExamSession);
+router.get('/user/:examId', protect, getUserSessions);
 
 /**
  * @openapi
@@ -82,6 +85,7 @@ router.get('/:id', protect, getExamSession);
  *         description: Not authorized
  */
 router.post('/:id/answer', protect, submitAnswer);
+router.post('/:id/sync', protect, syncAnswers);
 
 /**
  * @openapi

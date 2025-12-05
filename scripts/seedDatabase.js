@@ -72,93 +72,136 @@ const seedDatabase = async () => {
     const accessCode = crypto.randomBytes(4).toString("hex").toUpperCase();
 
     const sampleExam = await Exam.create({
-      title: "JavaScript Fundamentals",
-      description:
-        "Comprehensive test covering JavaScript basics, variables, functions, and DOM manipulation. This exam will assess your understanding of core JavaScript concepts.",
+      title: "Introduction to Computer Science",
+      description: "A mixed-format exam testing foundational knowledge in computing, programming, networks, and cybersecurity.",
       instructor: instructor._id,
       examLink: examLink,
       accessCode: accessCode,
       questions: [
         {
           type: "multiple-choice",
-          question:
-            "What is the correct way to declare a variable in JavaScript?",
+          question: "Which device is responsible for processing instructions in a computer?",
           options: [
-            { text: "var myVar = 5;", isCorrect: true },
-            { text: "variable myVar = 5;", isCorrect: false },
-            { text: "v myVar = 5;", isCorrect: false },
-            { text: "declare myVar = 5;", isCorrect: false },
+            { text: "RAM", isCorrect: false },
+            { text: "CPU", isCorrect: true },
+            { text: "GPU", isCorrect: false },
+            { text: "ROM", isCorrect: false }
           ],
           points: 2,
           difficulty: "easy",
-          category: "Variables",
+          category: "Hardware"
         },
         {
           type: "multiple-choice",
-          question:
-            "Which method is used to add an element to the end of an array?",
+          question: "Which of the following is the correct file extension for a JavaScript file?",
           options: [
-            { text: "push()", isCorrect: true },
-            { text: "pop()", isCorrect: false },
-            { text: "shift()", isCorrect: false },
-            { text: "unshift()", isCorrect: false },
+            { text: ".js", isCorrect: true },
+            { text: ".jsx", isCorrect: false },
+            { text: ".jv", isCorrect: false },
+            { text: ".script", isCorrect: false }
           ],
           points: 2,
           difficulty: "easy",
-          category: "Arrays",
+          category: "Programming"
         },
         {
           type: "true-false",
-          question: "JavaScript is a statically typed language.",
+          question: "HTTP is a secure communication protocol.",
           options: [
             { text: "True", isCorrect: false },
-            { text: "False", isCorrect: true },
+            { text: "False", isCorrect: true }
           ],
           points: 1,
           difficulty: "medium",
-          category: "Language Features",
+          category: "Networking"
         },
         {
           type: "short-answer",
-          question: "What does DOM stand for?",
-          correctAnswer: "Document Object Model",
-          points: 3,
-          difficulty: "medium",
-          category: "Web APIs",
+          question: "What does RAM stand for?",
+          correctAnswer: "Random Access Memory",
+          points: 2,
+          difficulty: "easy",
+          category: "Hardware"
         },
         {
           type: "multiple-choice",
-          question: "Which of the following is NOT a JavaScript data type?",
+          question: "Which of these is NOT a cybersecurity threat?",
           options: [
-            { text: "string", isCorrect: false },
-            { text: "boolean", isCorrect: false },
-            { text: "integer", isCorrect: true },
-            { text: "undefined", isCorrect: false },
+            { text: "Phishing", isCorrect: false },
+            { text: "Malware", isCorrect: false },
+            { text: "DDoS", isCorrect: false },
+            { text: "Compiler", isCorrect: true }
           ],
           points: 2,
           difficulty: "medium",
-          category: "Data Types",
+          category: "Cybersecurity"
         },
+        {
+          type: "multiple-choice",
+          question: "Which HTML tag is used to link a JavaScript file?",
+          options: [
+            { text: "<javascript>", isCorrect: false },
+            { text: "<script>", isCorrect: true },
+            { text: "<link>", isCorrect: false },
+            { text: "<js>", isCorrect: false }
+          ],
+          points: 2,
+          difficulty: "easy",
+          category: "Web Development"
+        },
+        {
+          type: "short-answer",
+          question: "Name one advantage of cloud computing.",
+          correctAnswer: "Scalability",
+          points: 2,
+          difficulty: "medium",
+          category: "Cloud"
+        },
+        {
+          type: "true-false",
+          question: "A router is used to connect multiple networks together.",
+          options: [
+            { text: "True", isCorrect: true },
+            { text: "False", isCorrect: false }
+          ],
+          points: 1,
+          difficulty: "easy",
+          category: "Networking"
+        },
+        {
+          type: "essay",
+          question: "Explain the difference between software and hardware. Provide at least two examples for each.",
+          points: 5,
+          difficulty: "medium",
+          category: "Computing"
+        },
+        {
+          type: "code",
+          question: "Write a JavaScript function named `addNumbers` that takes two parameters and returns their sum.",
+          points: 5,
+          difficulty: "hard",
+          category: "Programming"
+        }
       ],
       settings: {
-        timeLimit: 45,
-        passingScore: 70,
+        timeLimit: 50,
+        passingScore: 65,
         randomizeQuestions: true,
         randomizeOptions: true,
         allowReview: true,
         showResults: true,
         antiCheating: true,
-        autoGrading: true,
+        autoGrading: true
       },
       schedule: {
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        timezone: "UTC",
+        startDate: new Date("2025-12-01T00:00:00Z"),
+        endDate: new Date("2026-01-01T00:00:00Z"),
+        timezone: "UTC"
       },
       enrolledStudents: [],
       isActive: true,
-      category: "Programming",
-      tags: ["javascript", "fundamentals", "web-development", "programming"],
+      category: "Computing",
+      tags: ["computers", "technology", "programming", "IT"]
     });
 
     console.log("Created sample exam");
@@ -168,7 +211,7 @@ const seedDatabase = async () => {
     console.log(`Title: ${sampleExam.title}`);
     console.log(`Access Code: ${sampleExam.accessCode}`);
     console.log(`\n🔗 EXAM LINK (Click to access):`);
-    console.log(`http://localhost:5173/exam/${sampleExam.examLink}`);
+    console.log(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/exam/${sampleExam.examLink}`);
     console.log(`\n👥 SAMPLE CREDENTIALS:`);
     console.log("Admin: admin@cadna.com / admin123");
     console.log("Instructor: instructor@cadna.com / instructor123");
