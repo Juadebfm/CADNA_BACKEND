@@ -13,7 +13,6 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import metricsRoutes from "./routes/metricsRoutes.js";
 import resultRoutes from "./routes/resultRoutes.js";
-import resultRoutes from "./routes/resultRoutes.js";
 import { ensureDBConnection } from "./middleware/DatabaseMiddleware.js";
 import dotenv from "dotenv";
 
@@ -75,7 +74,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/metrics", metricsRoutes);
-app.use("/api/results", resultRoutes);
 app.use("/api/results", resultRoutes);
 
 // 404 handler - must be after all routes
