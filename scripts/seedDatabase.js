@@ -218,16 +218,119 @@ const seedDatabase = async () => {
 
     console.log("Created sample exam");
 
+    // Create second exam with all parameters
+    const examLink2 = crypto.randomUUID();
+    const accessCode2 = crypto.randomBytes(4).toString("hex").toUpperCase();
+
+    const advancedExam = await Exam.create({
+      title: "Advanced Web Development & Security",
+      description: "Comprehensive exam covering advanced web technologies, security practices, and modern development frameworks.",
+      instructor: instructor._id,
+      examLink: examLink2,
+      accessCode: accessCode2,
+      questions: [
+        {
+          _id: new mongoose.Types.ObjectId(),
+          type: "multiple-choice",
+          question: "Which HTTP status code indicates a successful request?",
+          options: [
+            { text: "200", isCorrect: true },
+            { text: "404", isCorrect: false },
+            { text: "500", isCorrect: false },
+            { text: "302", isCorrect: false }
+          ],
+          points: 3,
+          difficulty: "easy",
+          category: "Web Development",
+          media: "https://example.com/http-codes.png"
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          type: "true-false",
+          question: "HTTPS encrypts data in transit between client and server.",
+          options: [
+            { text: "True", isCorrect: true },
+            { text: "False", isCorrect: false }
+          ],
+          points: 2,
+          difficulty: "easy",
+          category: "Security"
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          type: "short-answer",
+          question: "What does API stand for?",
+          correctAnswer: "Application Programming Interface",
+          points: 2,
+          difficulty: "easy",
+          category: "Web Development"
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          type: "multiple-choice",
+          question: "Which of the following is a NoSQL database?",
+          options: [
+            { text: "MySQL", isCorrect: false },
+            { text: "PostgreSQL", isCorrect: false },
+            { text: "MongoDB", isCorrect: true },
+            { text: "SQLite", isCorrect: false }
+          ],
+          points: 3,
+          difficulty: "medium",
+          category: "Database"
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          type: "essay",
+          question: "Explain the concept of Cross-Site Scripting (XSS) attacks and describe three methods to prevent them.",
+          points: 10,
+          difficulty: "hard",
+          category: "Security"
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          type: "code",
+          question: "Write a JavaScript function that validates an email address using regex.",
+          points: 8,
+          difficulty: "hard",
+          category: "Programming"
+        }
+      ],
+      settings: {
+        timeLimit: 90,
+        passingScore: 75,
+        randomizeQuestions: false,
+        randomizeOptions: true,
+        allowReview: false,
+        showResults: false,
+        antiCheating: true,
+        autoGrading: false
+      },
+      schedule: {
+        startDate: new Date("2025-01-15T09:00:00Z"),
+        endDate: new Date("2025-01-15T18:00:00Z"),
+        timezone: "America/New_York"
+      },
+      enrolledStudents: [students[0]._id],
+      isActive: true,
+      category: "Advanced Technology",
+      tags: ["web-development", "security", "advanced", "programming", "database"]
+    });
+
+    console.log("Created advanced exam");
+
     console.log("\n=== DATABASE SEEDED SUCCESSFULLY! ===");
-    console.log("\n📚 SAMPLE EXAM CREATED:");
-    console.log(`Title: ${sampleExam.title}`);
-    console.log(`Access Code: ${sampleExam.accessCode}`);
-    console.log(`\n🔗 EXAM LINK (Click to access):`);
-    console.log(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/exam/${sampleExam.examLink}`);
+    console.log("\n📚 SAMPLE EXAMS CREATED:");
+    console.log(`\n1. ${sampleExam.title}`);
+    console.log(`   Access Code: ${sampleExam.accessCode}`);
+    console.log(`   Link: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/exam/${sampleExam.examLink}`);
+    console.log(`\n2. ${advancedExam.title}`);
+    console.log(`   Access Code: ${advancedExam.accessCode}`);
+    console.log(`   Link: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/exam/${advancedExam.examLink}`);
     console.log(`\n👥 SAMPLE CREDENTIALS:`);
     console.log("Admin: admin@cadna.com / admin123");
     console.log("Instructor: instructor@cadna.com / instructor123");
-    console.log("Student 1: alice@student.com / student123");
+    console.log("Student 1: alice@student.com / student123 (enrolled in advanced exam)");
     console.log("Student 2: bob@student.com / student123");
     console.log("\n📋 INSTRUCTIONS:");
     console.log("1. Login as a student (alice@student.com / student123)");

@@ -52,7 +52,19 @@ export const getExamResult = asyncHandler(async (req, res) => {
   
   res.json({
     success: true,
-    data: result
+    data: {
+      ...result.toObject(),
+      // Map backend fields to frontend expectations
+      examTitle: result.exam?.title,
+      submittedAt: result.createdAt,
+      completedAt: result.createdAt,
+      correctAnswers: result.analytics?.questionsCorrect || 0,
+      incorrectAnswers: (result.analytics?.questionsAttempted || 0) - (result.analytics?.questionsCorrect || 0),
+      totalQuestions: result.analytics?.questionsAttempted || 0,
+      timeSpent: result.analytics?.timeSpent ? `${Math.floor(result.analytics.timeSpent / 60)}:${String(result.analytics.timeSpent % 60).padStart(2, '0')}` : '0:00',
+      passingScore: result.exam?.settings?.passingScore || 65,
+      percentage: result.score?.percentage || 0
+    }
   });
 });
 

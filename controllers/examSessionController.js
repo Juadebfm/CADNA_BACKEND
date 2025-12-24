@@ -23,7 +23,10 @@ export const getExamSession = asyncHandler(async (req, res) => {
   }
 
   const session = await ExamSession.findById(req.params.id)
-    .populate('exam', 'title settings')
+    .populate({
+      path: 'exam',
+      select: 'title description questions settings timeLimit duration'
+    })
     .populate('student', 'firstName lastName email');
 
   if (!session) {
@@ -186,7 +189,12 @@ export const submitExam = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Exam submitted successfully',
-    data: session
+    data: {
+      session,
+      examId: session.exam._id,
+      score: session.score,
+      isGraded: session.isGraded
+    }
   });
 });
 
