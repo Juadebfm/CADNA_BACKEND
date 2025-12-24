@@ -16,6 +16,10 @@ export const getExams = asyncHandler(async (req, res) => {
   if (enrolled === 'true' && req.user) {
     query.enrolledStudents = req.user._id;
   }
+  // If enrolled=false or not specified, show only NON-enrolled exams for students
+  else if (req.user && req.user.role === 'student') {
+    query.enrolledStudents = { $ne: req.user._id };
+  }
   
   if (category) query.category = category;
   if (search) {
