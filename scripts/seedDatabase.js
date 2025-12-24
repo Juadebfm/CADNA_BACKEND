@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import crypto from "crypto";
 import User from "../models/userModel.js";
 import Exam from "../models/examModel.js";
+import ExamSession from "../models/examSessionModel.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const seedDatabase = async () => {
     // Clear existing data
     await User.deleteMany({});
     await Exam.deleteMany({});
+    await ExamSession.deleteMany({});
     console.log("Cleared existing data");
 
     // Create admin user
@@ -79,6 +81,7 @@ const seedDatabase = async () => {
       accessCode: accessCode,
       questions: [
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "multiple-choice",
           question: "Which device is responsible for processing instructions in a computer?",
           options: [
@@ -92,6 +95,7 @@ const seedDatabase = async () => {
           category: "Hardware"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "multiple-choice",
           question: "Which of the following is the correct file extension for a JavaScript file?",
           options: [
@@ -105,6 +109,7 @@ const seedDatabase = async () => {
           category: "Programming"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "true-false",
           question: "HTTP is a secure communication protocol.",
           options: [
@@ -116,6 +121,7 @@ const seedDatabase = async () => {
           category: "Networking"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "short-answer",
           question: "What does RAM stand for?",
           correctAnswer: "Random Access Memory",
@@ -124,6 +130,7 @@ const seedDatabase = async () => {
           category: "Hardware"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "multiple-choice",
           question: "Which of these is NOT a cybersecurity threat?",
           options: [
@@ -137,6 +144,7 @@ const seedDatabase = async () => {
           category: "Cybersecurity"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "multiple-choice",
           question: "Which HTML tag is used to link a JavaScript file?",
           options: [
@@ -150,6 +158,7 @@ const seedDatabase = async () => {
           category: "Web Development"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "short-answer",
           question: "Name one advantage of cloud computing.",
           correctAnswer: "Scalability",
@@ -158,6 +167,7 @@ const seedDatabase = async () => {
           category: "Cloud"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "true-false",
           question: "A router is used to connect multiple networks together.",
           options: [
@@ -169,6 +179,7 @@ const seedDatabase = async () => {
           category: "Networking"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "essay",
           question: "Explain the difference between software and hardware. Provide at least two examples for each.",
           points: 5,
@@ -176,6 +187,7 @@ const seedDatabase = async () => {
           category: "Computing"
         },
         {
+          _id: new mongoose.Types.ObjectId(),
           type: "code",
           question: "Write a JavaScript function named `addNumbers` that takes two parameters and returns their sum.",
           points: 5,

@@ -46,7 +46,7 @@ const router = express.Router();
  *       '200':
  *         description: List of exams
  */
-router.get('/', getExams);
+router.get('/', protect, getExams);
 
 /**
  * @openapi
