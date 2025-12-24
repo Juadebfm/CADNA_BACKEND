@@ -8,18 +8,19 @@ import crypto from 'crypto';
 // @route   GET /api/exams
 // @access  Public
 export const getExams = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, category, search, enrolled } = req.query;
+  const { page = 1, limit = 10, category, search } = req.query;
   
   let query = { isActive: true };
   
-  // If enrolled=true and user is authenticated, show only enrolled exams
-  if (enrolled === 'true' && req.user) {
+  // Students: only see exams they're enrolled in
+  if (req.user && req.user.role === 'student') {
     query.enrolledStudents = req.user._id;
   }
-  // If enrolled=false or not specified, show only NON-enrolled exams for students
-  else if (req.user && req.user.role === 'student') {
-    query.enrolledStudents = { $ne: req.user._id };
+  // Instructors: only see exams they created
+  else if (req.user && req.user.role === 'instructor') {
+    query.instructor = req.user._id;
   }
+  // Admins: see all exams (no additional filter)
   
   if (category) query.category = category;
   if (search) {
