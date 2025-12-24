@@ -20,17 +20,18 @@ export const getExamResult = asyncHandler(async (req, res) => {
     const session = await ExamSession.findOne({
       exam: examId,
       student: req.user._id,
-      status: { $in: ['submitted', 'auto-submitted'] }
+      status: { $in: ['submitted', 'auto-submitted'] },
+      isGraded: true
     }).populate('exam');
     
-    if (session && session.isGraded) {
+    if (session && session.score) {
       result = await Result.create({
         examSession: session._id,
         exam: examId,
         student: req.user._id,
         score: session.score,
         analytics: {
-          timeSpent: Math.floor((session.endTime - session.startTime) / 1000),
+          timeSpent: session.endTime ? Math.floor((session.endTime - session.startTime) / 1000) : 0,
           questionsAttempted: session.answers.length,
           questionsCorrect: session.answers.filter(a => a.isCorrect).length
         }

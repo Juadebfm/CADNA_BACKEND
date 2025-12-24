@@ -355,11 +355,12 @@ const gradeExam = async (session) => {
   }
 
   // Calculate score
-  const percentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+  const percentage = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
   const passed = percentage >= exam.settings.passingScore;
 
   session.score = {
-    total: totalPoints,
+    totalPoints,
+    earnedPoints,
     percentage,
     passed
   };
