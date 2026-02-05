@@ -85,7 +85,7 @@ app.use(errorHandler);
 // Connect to databases first, then start server
 (async () => {
   try {
-    console.log('🔄 Starting CADNA Backend...');
+    console.log(' Starting CADNA Backend...');
     
     // Connect Redis (non-blocking)
     connectRedis().catch(err => console.warn('Redis failed:', err.message));
@@ -95,11 +95,11 @@ app.use(errorHandler);
     
     // Start server only after DB is ready
     app.listen(PORT, () => {
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
+      console.log(` Server running on port ${PORT}`);
+      console.log(` API docs: http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
+    console.error(' Failed to start server:', error.message);
     process.exit(1);
   }
 })();

@@ -1,3 +1,4 @@
+/*
 import { createClient } from "redis";
 
 let client = null;
@@ -58,6 +59,23 @@ const redis = {
     safeRedisOperation((client) => client.setEx(key, seconds, value)),
   del: (key) => safeRedisOperation((client) => client.del(key)),
   exists: (key) => safeRedisOperation((client) => client.exists(key), false),
+};
+
+export default redis;
+*/
+
+// Redis disabled — implementation commented out above.
+export const connectRedis = async () => {
+  // No-op while Redis is disabled
+  return;
+};
+
+const redis = {
+  get: async () => null,
+  set: async () => null,
+  setEx: async () => null,
+  del: async () => null,
+  exists: async () => false,
 };
 
 export default redis;
