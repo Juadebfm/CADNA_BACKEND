@@ -22,13 +22,28 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'x-requested-with', 'Accept'],
-  optionsSuccessStatus: 200
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+      "https://exam-genius-cadna-seven.vercel.app",
+      "https://*.vercel.app",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Cookie",
+      "x-requested-with",
+      "Accept",
+    ],
+    optionsSuccessStatus: 200,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -38,11 +53,14 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Handle preflight requests
 app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, x-requested-with, Accept');
-    res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Cookie, x-requested-with, Accept",
+    );
+    res.header("Access-Control-Allow-Credentials", "true");
     return res.sendStatus(200);
   }
   next();
@@ -60,11 +78,12 @@ app.get("/", (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  res.json({ 
-    status: 'ok', 
+  const dbStatus =
+    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+  res.json({
+    status: "ok",
     database: dbStatus,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -76,7 +95,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/api/results", resultRoutes);
-app.use('/api/admin', seedRoutes);
+app.use("/api/admin", seedRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);
@@ -87,21 +106,21 @@ app.use(errorHandler);
 // Connect to databases first, then start server
 (async () => {
   try {
-    console.log(' Starting CADNA Backend...');
-    
+    console.log(" Starting CADNA Backend...");
+
     // Connect Redis (non-blocking)
-    connectRedis().catch(err => console.warn('Redis failed:', err.message));
-    
+    connectRedis().catch((err) => console.warn("Redis failed:", err.message));
+
     // Connect MongoDB (blocking)
     await connectDB();
-    
+
     // Start server only after DB is ready
     app.listen(PORT, () => {
       console.log(` Server running on port ${PORT}`);
       console.log(` API docs: http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
-    console.error(' Failed to start server:', error.message);
+    console.error(" Failed to start server:", error.message);
     process.exit(1);
   }
 })();
