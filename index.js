@@ -29,7 +29,7 @@ app.use(
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:3000",
-      "https://exam-genius-cadna-seven.vercel.app",
+      "https://exam-genius-cadna-p7raj245e-ifeanyis-projects-30bb4f9f.vercel.app/",
       "https://*.vercel.app",
     ],
     credentials: true,
