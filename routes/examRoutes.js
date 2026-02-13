@@ -8,6 +8,7 @@ import {
   enrollInExam,
   startExam,
   getExamByLink,
+  getExamWithAnswers,
   enrollByAccessCode
 } from '../controllers/examController.js';
 import { protect, optionalAuth } from '../middleware/AuthMiddleware.js';
@@ -23,7 +24,7 @@ router.post('/enroll-code', protect, enrollByAccessCode);
 
 
 router.get('/:id', protect, getExam);
-
+router.get('/:id/with-answers', protect, getExamWithAnswers);
 router.post('/:id/enroll', protect, enrollInExam);
 router.post('/:id/start', protect, startExam);
 

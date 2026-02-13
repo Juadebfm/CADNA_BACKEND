@@ -88,6 +88,43 @@ export const getExam = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get exam with correct answers (for results view only)
+// @route   GET /api/exams/:id/with-answers
+// @access  Private (Student - after submission only)
+export const getExamWithAnswers = asyncHandler(async (req, res) => {
+  const exam = await Exam.findById(req.params.id)
+    .populate('instructor', 'firstName lastName email');
+    // NO .select() - this returns everything including correctAnswer
+
+  if (!exam) {
+    return res.status(404).json({
+      success: false,
+      message: 'Exam not found'
+    });
+  }
+
+  // Only allow if user has submitted the exam OR is admin/instructor
+  if (req.user.role === 'student') {
+    const hasSubmitted = await ExamSession.findOne({
+      exam: req.params.id,
+      student: req.user._id,
+      status: { $in: ['submitted', 'auto-submitted'] }
+    });
+
+    if (!hasSubmitted) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot view answers before submitting exam'
+      });
+    }
+  }
+
+  res.json({
+    success: true,
+    data: exam
+  });
+});
+
 // @desc    Create exam
 // @route   POST /api/exams
 // @access  Private (Instructor/Admin)
@@ -377,3 +414,5 @@ export const enrollByAccessCode = asyncHandler(async (req, res) => {
     }
   });
 });
+
+

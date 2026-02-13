@@ -7,4 +7,5 @@ const router = express.Router();
 router.get('/:examId', protect, getExamResult);
 router.get('/:examId/detailed', protect, getDetailedResult);
 
+
 export default router;
