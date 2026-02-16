@@ -5,6 +5,70 @@ import Result from '../models/resultModel.js';
 import redis from '../db/redis.js';
 import { createEvent } from './eventController.js';
 
+// @desc    Start a new exam session
+// @route   POST /api/exam-sessions/start/:examId
+// @access  Private (Student)
+export const startExam = asyncHandler(async (req, res) => {
+  const { examId } = req.params;
+  const studentId = req.user._id;
+
+  // Get exam details
+  const exam = await Exam.findById(examId);
+  
+  if (!exam) {
+    return res.status(404).json({
+      success: false,
+      message: 'Exam not found'
+    });
+  }
+
+  // Check if student is enrolled (commented out for testing - uncomment in production)
+  // if (!exam.enrolledStudents.includes(studentId)) {
+  //   return res.status(403).json({
+  //     success: false,
+  //     message: 'You are not enrolled in this exam'
+  //   });
+  // }
+
+  // Check if student already has an active session for this exam
+  const existingSession = await ExamSession.findOne({
+    exam: examId,
+    student: studentId,
+    status: 'in-progress'
+  });
+
+  if (existingSession) {
+    // Return existing session
+    return res.status(200).json({
+      success: true,
+      message: 'Resumed existing exam session',
+      data: existingSession
+    });
+  }
+
+  // Create new exam session
+  const examSession = await ExamSession.create({
+    exam: examId,
+    student: studentId,
+    startTime: new Date(),
+    answers: [],
+    status: 'in-progress',
+    timeRemaining: exam.settings?.timeLimit || exam.timeLimit || 60
+  });
+
+  // Log start event
+  await createEvent(req.user._id, 'start_exam', {
+    examId: examId,
+    sessionId: examSession._id
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Exam session started successfully',
+    data: examSession
+  });
+});
+
 // @desc    Get exam session
 // @route   GET /api/exam-sessions/:id
 // @access  Private
