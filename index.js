@@ -69,7 +69,7 @@ app.use(cookieParser());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Handle preflight requests
-app.options("*", cors(corsOptions));
+app.options("/*", cors(corsOptions));
 
 // Add request logging
 app.use((req, res, next) => {
