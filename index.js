@@ -22,30 +22,45 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5000",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:3000",
-      "https://exam-genius-cadna-p7raj245e-ifeanyis-projects-30bb4f9f.vercel.app/",
-      "https://*.vercel.app",
-      'https://exam-genius-cadna-five.vercel.app'
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Cookie",
-      "x-requested-with",
-      "Accept",
-    ],
-    optionsSuccessStatus: 200,
-  }),
-);
+const allowedOrigins = new Set([
+  "http://localhost:3000",
+  "http://localhost:5000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000",
+  "https://exam-genius-cadna-p7raj245e-ifeanyis-projects-30bb4f9f.vercel.app",
+  "https://exam-genius-cadna-five.vercel.app",
+]);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // non-browser tools (e.g., curl, Postman)
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const { hostname } = new URL(origin);
+    return hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Cookie",
+    "x-requested-with",
+    "Accept",
+  ],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -54,19 +69,7 @@ app.use(cookieParser());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Handle preflight requests
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", req.headers.origin);
-    res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, Cookie, x-requested-with, Accept",
-    );
-    res.header("Access-Control-Allow-Credentials", "true");
-    return res.sendStatus(200);
-  }
-  next();
-});
+app.options("*", cors(corsOptions));
 
 // Add request logging
 app.use((req, res, next) => {
