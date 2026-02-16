@@ -68,8 +68,8 @@ app.use(cookieParser());
 // Swagger Documentation
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
-// Handle preflight requests
-app.options("/*", cors(corsOptions));
+// Handle preflight requests (Express 5 requires a RegExp for catch-all)
+app.options(/.*/, cors(corsOptions));
 
 // Add request logging
 app.use((req, res, next) => {
