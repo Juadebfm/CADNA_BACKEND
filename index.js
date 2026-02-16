@@ -26,11 +26,13 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "http://localhost:5000",
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:3000",
       "https://exam-genius-cadna-p7raj245e-ifeanyis-projects-30bb4f9f.vercel.app/",
       "https://*.vercel.app",
+      'https://exam-genius-cadna-five.vercel.app'
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
