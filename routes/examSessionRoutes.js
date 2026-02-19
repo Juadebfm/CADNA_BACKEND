@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  startExam,           // ← ADD THIS IMPORT
+  startExam,           
   getExamSession,
   submitAnswer,
   submitExam,
@@ -9,11 +9,15 @@ import {
   getUserSessions,
   syncAnswers
 } from '../controllers/examSessionController.js';
+import {
+  logIntegrityEvent,
+  getIntegrityEvents
+} from '../controllers/integrityEventController.js';
 import { protect } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
 
-// START EXAM - ADD THIS ROUTE!
+// START EXAM
 router.post('/start/:examId', protect, startExam);
 
 // Get session
@@ -32,5 +36,9 @@ router.post('/:id/auto-submit', protect, autoSubmitExam);
 
 // Flag suspicious activity
 router.post('/:id/flag-activity', protect, flagSuspiciousActivity);
+
+// Integrity event logging (NEW - Anti-cheating)
+router.post('/:id/integrity-event', protect, logIntegrityEvent);
+router.get('/:id/integrity-events', protect, getIntegrityEvents);
 
 export default router;
