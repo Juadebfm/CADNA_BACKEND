@@ -6,13 +6,12 @@ import redis from '../db/redis.js';
 import { createEvent } from './eventController.js';
 
 // @desc    Start a new exam session
-// @route   POST /api/exam-sessions/start/:examId
+// @route   POST /api/exam-sessions/start
 // @access  Private (Student)
 export const startExam = asyncHandler(async (req, res) => {
-  const { examId } = req.params;
+  const { examId } = req.body;
   const studentId = req.user._id;
 
-  // Get exam details
   const exam = await Exam.findById(examId);
   
   if (!exam) {
@@ -22,15 +21,7 @@ export const startExam = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check if student is enrolled (commented out for testing - uncomment in production)
-  // if (!exam.enrolledStudents.includes(studentId)) {
-  //   return res.status(403).json({
-  //     success: false,
-  //     message: 'You are not enrolled in this exam'
-  //   });
-  // }
-
-  // Check if student already has an active session for this exam
+  // Check for existing session
   const existingSession = await ExamSession.findOne({
     exam: examId,
     student: studentId,
@@ -38,7 +29,6 @@ export const startExam = asyncHandler(async (req, res) => {
   });
 
   if (existingSession) {
-    // Return existing session
     return res.status(200).json({
       success: true,
       message: 'Resumed existing exam session',
@@ -46,17 +36,37 @@ export const startExam = asyncHandler(async (req, res) => {
     });
   }
 
-  // Create new exam session
+  // Create new exam session with violation tracking
   const examSession = await ExamSession.create({
     exam: examId,
     student: studentId,
     startTime: new Date(),
     answers: [],
     status: 'in-progress',
-    timeRemaining: exam.settings?.timeLimit || exam.timeLimit || 60
+    timeRemaining: exam.settings?.timeLimit || exam.timeLimit || 60,
+    
+    // Violation tracking
+    totalViolations: 0,
+    violations: {
+      tabSwitches: 0,
+      windowBlurs: 0,
+      fullscreenExits: 0,
+      copyAttempts: 0,
+      otherViolations: 0
+    },
+    integrityEvents: [],
+    flagged: false,
+    flagReason: null,
+    
+    // Browser info
+    browserInfo: {
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      platform: req.body.platform || 'Unknown',
+      screenResolution: req.body.screenResolution || 'Unknown'
+    },
+    ipAddress: req.ip || req.connection?.remoteAddress || 'Unknown'
   });
 
-  // Log start event
   await createEvent(req.user._id, 'start_exam', {
     examId: examId,
     sessionId: examSession._id
@@ -73,7 +83,6 @@ export const startExam = asyncHandler(async (req, res) => {
 // @route   GET /api/exam-sessions/:id
 // @access  Private
 export const getExamSession = asyncHandler(async (req, res) => {
-  // Try Redis first (if available)
   try {
     const cached = await redis.get(`exam_session:${req.params.id}`);
     if (cached) {
@@ -83,7 +92,7 @@ export const getExamSession = asyncHandler(async (req, res) => {
       });
     }
   } catch (error) {
-    // Redis unavailable, continue with database
+    // Redis unavailable, continue
   }
 
   const session = await ExamSession.findById(req.params.id)
@@ -100,7 +109,6 @@ export const getExamSession = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check ownership
   if (session.student._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     return res.status(403).json({
       success: false,
@@ -108,7 +116,6 @@ export const getExamSession = asyncHandler(async (req, res) => {
     });
   }
 
-  // Log view event
   await createEvent(req.user._id, 'view_question', {
     examId: session.exam._id,
     sessionId: session._id
@@ -121,12 +128,12 @@ export const getExamSession = asyncHandler(async (req, res) => {
 });
 
 // @desc    Submit answer
-// @route   POST /api/exam-sessions/:id/answer
+// @route   POST /api/exam-sessions/:id/submit-answer
 // @access  Private (Student)
 export const submitAnswer = asyncHandler(async (req, res) => {
   const { questionId, answer, timeSpent, flagged } = req.body;
 
-  const session = await ExamSession.findById(req.params.id);
+  const session = await ExamSession.findById(req.params.id).populate('exam');
 
   if (!session) {
     return res.status(404).json({
@@ -149,7 +156,7 @@ export const submitAnswer = asyncHandler(async (req, res) => {
     });
   }
 
-  // Find existing answer or create new one
+  // Find existing answer or create new
   const existingAnswerIndex = session.answers.findIndex(
     a => a.questionId.toString() === questionId
   );
@@ -167,9 +174,15 @@ export const submitAnswer = asyncHandler(async (req, res) => {
     session.answers.push(answerData);
   }
 
+  // UPDATE TIME REMAINING
+  const startTime = new Date(session.startTime);
+  const now = new Date();
+  const elapsedMinutes = Math.floor((now - startTime) / 1000 / 60);
+  const totalTime = session.exam.settings?.timeLimit || session.exam.timeLimit || 60;
+  session.timeRemaining = Math.max(0, totalTime - elapsedMinutes);
+
   await session.save();
 
-  // Log answer event
   await createEvent(req.user._id, 'answer_question', {
     examId: session.exam,
     sessionId: session._id,
@@ -177,7 +190,6 @@ export const submitAnswer = asyncHandler(async (req, res) => {
     data: { answer, timeTakenSeconds: timeSpent, flagged }
   });
 
-  // Auto-save progress every answer
   session.lastActivity = new Date();
   session.progress = {
     questionsAnswered: session.answers.length,
@@ -186,16 +198,18 @@ export const submitAnswer = asyncHandler(async (req, res) => {
       Math.round((session.answers.length / session.exam.questions.length) * 100) : 0
   };
 
-  // Update Redis cache (if available)
   try {
     await redis.setEx(`exam_session:${session._id}`, 3600, JSON.stringify(session));
   } catch (error) {
-    // Redis unavailable, continue without caching
+    // Redis unavailable
   }
 
   res.json({
     success: true,
-    message: 'Answer submitted successfully'
+    message: 'Answer submitted successfully',
+    data: {
+      timeRemaining: session.timeRemaining
+    }
   });
 });
 
@@ -226,9 +240,15 @@ export const submitExam = asyncHandler(async (req, res) => {
     });
   }
 
-  // Update session status
+  // CALCULATE FINAL TIME REMAINING
+  const startTime = new Date(session.startTime);
+  const endTime = new Date();
+  const elapsedMinutes = Math.floor((endTime - startTime) / 1000 / 60);
+  const totalTime = session.exam.settings?.timeLimit || session.exam.timeLimit || 60;
+  session.timeRemaining = Math.max(0, totalTime - elapsedMinutes);
+
   session.status = 'submitted';
-  session.endTime = new Date();
+  session.endTime = endTime;
 
   // Auto-grade if enabled
   if (session.exam.settings.autoGrading) {
@@ -237,17 +257,15 @@ export const submitExam = asyncHandler(async (req, res) => {
 
   await session.save();
 
-  // Log submit event
   await createEvent(req.user._id, 'submit_exam', {
     examId: session.exam._id,
     sessionId: session._id
   });
 
-  // Clear Redis cache (if available)
   try {
     await redis.del(`exam_session:${session._id}`);
   } catch (error) {
-    // Redis unavailable, continue without cache clearing
+    // Redis unavailable
   }
 
   res.json({
@@ -282,6 +300,8 @@ export const autoSubmitExam = asyncHandler(async (req, res) => {
     });
   }
 
+  // TIME EXPIRED - SET TO 0
+  session.timeRemaining = 0;
   session.status = 'auto-submitted';
   session.endTime = new Date();
 
@@ -292,11 +312,10 @@ export const autoSubmitExam = asyncHandler(async (req, res) => {
 
   await session.save();
 
-  // Clear Redis cache (if available)
   try {
     await redis.del(`exam_session:${session._id}`);
   } catch (error) {
-    // Redis unavailable, continue without cache clearing
+    // Redis unavailable
   }
 
   res.json({
@@ -323,7 +342,7 @@ export const getUserSessions = asyncHandler(async (req, res) => {
 // @access  Private (Student)
 export const syncAnswers = asyncHandler(async (req, res) => {
   const { answers } = req.body;
-  const session = await ExamSession.findById(req.params.id);
+  const session = await ExamSession.findById(req.params.id).populate('exam');
 
   if (!session || session.student.toString() !== req.user._id.toString()) {
     return res.status(404).json({ success: false, message: 'Session not found' });
@@ -342,10 +361,24 @@ export const syncAnswers = asyncHandler(async (req, res) => {
     }
   }
 
+  // UPDATE TIME ON AUTO-SAVE
+  const startTime = new Date(session.startTime);
+  const now = new Date();
+  const elapsedMinutes = Math.floor((now - startTime) / 1000 / 60);
+  const totalTime = session.exam.settings?.timeLimit || session.exam.timeLimit || 60;
+  session.timeRemaining = Math.max(0, totalTime - elapsedMinutes);
+
   session.lastActivity = new Date();
   await session.save();
 
-  res.json({ success: true, message: 'Answers synced' });
+  res.json({ 
+    success: true, 
+    message: 'Answers synced',
+    data: {
+      answersCount: session.answers.length,
+      timeRemaining: session.timeRemaining
+    }
+  });
 });
 
 // @desc    Flag suspicious activity
@@ -369,13 +402,11 @@ export const flagSuspiciousActivity = asyncHandler(async (req, res) => {
     severity
   });
 
-  // Update risk score based on activity
   const riskIncrease = severity === 'high' ? 20 : severity === 'medium' ? 10 : 5;
   session.aiAnalysis.riskScore = Math.min(100, (session.aiAnalysis.riskScore || 0) + riskIncrease);
 
   await session.save();
 
-  // Log anti-cheating event
   await createEvent(req.user._id, 'anti_cheating_flag', {
     examId: session.exam,
     sessionId: session._id,
@@ -388,47 +419,101 @@ export const flagSuspiciousActivity = asyncHandler(async (req, res) => {
   });
 });
 
-// Helper function to grade exam
+// ✅ FIXED GRADING - Case-insensitive + handles value/text mismatch
 const gradeExam = async (session) => {
   const exam = session.exam;
+  let correctAnswers = 0;
+  let incorrectAnswers = 0;
+  let unanswered = 0;
   let totalPoints = 0;
   let earnedPoints = 0;
 
-  // Grade each answer
-  for (const answer of session.answers) {
-    const question = exam.questions.id(answer.questionId);
-    if (!question) continue;
+  // Iterate through ALL exam questions
+  exam.questions.forEach((question, index) => {
+    totalPoints += question.points || 1;
 
-    totalPoints += question.points;
+    // Find if student answered this question
+    const studentAnswer = session.answers.find(
+      a => a.questionId.toString() === question._id.toString()
+    );
 
-    // Auto-grade based on question type
+    if (!studentAnswer || !studentAnswer.answer || studentAnswer.answer.toString().trim() === '') {
+      // Question not answered
+      unanswered++;
+      incorrectAnswers++;
+      return;
+    }
+
+    // Question was answered - check if correct
+    let isCorrect = false;
+
     if (question.type === 'multiple-choice' || question.type === 'true-false') {
-      const correctOption = question.options.find(opt => opt.isCorrect);
-      if (correctOption && answer.answer === correctOption.text) {
-        answer.isCorrect = true;
-        answer.points = question.points;
-        earnedPoints += question.points;
+      // ✅ CASE-INSENSITIVE COMPARISON
+      const studentAnswerLower = studentAnswer.answer.toString().toLowerCase().trim();
+      
+      // Check against correctAnswer field
+      if (question.correctAnswer) {
+        const correctAnswerLower = question.correctAnswer.toString().toLowerCase().trim();
+        isCorrect = studentAnswerLower === correctAnswerLower;
+        
+        // ✅ If not correct, check if student selected by option text/value
+        if (!isCorrect && question.options) {
+          const correctOption = question.options.find(opt => {
+            const optValue = (opt.value || '').toString().toLowerCase().trim();
+            const optText = (opt.text || '').toString().toLowerCase().trim();
+            return optValue === correctAnswerLower || optText === correctAnswerLower || opt.isCorrect === true;
+          });
+          
+          if (correctOption) {
+            const correctValueLower = (correctOption.value || '').toString().toLowerCase().trim();
+            const correctTextLower = (correctOption.text || '').toString().toLowerCase().trim();
+            // ✅ Accept either value OR text
+            isCorrect = studentAnswerLower === correctValueLower || studentAnswerLower === correctTextLower;
+          }
+        }
       } else {
-        answer.isCorrect = false;
-        answer.points = 0;
+        // Check against isCorrect flag in options
+        const correctOption = question.options.find(opt => opt.isCorrect === true);
+        if (correctOption) {
+          const correctValueLower = (correctOption.value || correctOption.text || '').toString().toLowerCase().trim();
+          const correctTextLower = (correctOption.text || correctOption.value || '').toString().toLowerCase().trim();
+          // ✅ Accept either value OR text
+          isCorrect = studentAnswerLower === correctValueLower || studentAnswerLower === correctTextLower;
+        }
+      }
+
+      if (isCorrect) {
+        correctAnswers++;
+        earnedPoints += question.points || 1;
+        studentAnswer.isCorrect = true;
+        studentAnswer.points = question.points || 1;
+      } else {
+        incorrectAnswers++;
+        studentAnswer.isCorrect = false;
+        studentAnswer.points = 0;
       }
     } else if (question.type === 'short-answer') {
-      // Simple string comparison (can be enhanced with AI)
-      if (answer.answer.toLowerCase().trim() === question.correctAnswer.toLowerCase().trim()) {
-        answer.isCorrect = true;
-        answer.points = question.points;
-        earnedPoints += question.points;
+      // Simple string comparison - case insensitive
+      isCorrect = studentAnswer.answer.toLowerCase().trim() === 
+                  (question.correctAnswer || question.answer || '').toLowerCase().trim();
+      
+      if (isCorrect) {
+        correctAnswers++;
+        earnedPoints += question.points || 1;
+        studentAnswer.isCorrect = true;
+        studentAnswer.points = question.points || 1;
       } else {
-        answer.isCorrect = false;
-        answer.points = 0;
+        incorrectAnswers++;
+        studentAnswer.isCorrect = false;
+        studentAnswer.points = 0;
       }
     }
     // Essay and code questions require manual grading
-  }
+  });
 
-  // Calculate score
+  // Calculate score based on ALL questions
   const percentage = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
-  const passed = percentage >= exam.settings.passingScore;
+  const passed = percentage >= (exam.settings?.passingScore || exam.passingScore || 70);
 
   session.score = {
     totalPoints,
@@ -453,7 +538,9 @@ const gradeExam = async (session) => {
     analytics: {
       timeSpent: Math.floor((session.endTime - session.startTime) / 1000),
       questionsAttempted: session.answers.length,
-      questionsCorrect: session.answers.filter(a => a.isCorrect).length
+      questionsCorrect: correctAnswers,
+      questionsIncorrect: incorrectAnswers,
+      questionsUnanswered: unanswered
     }
   });
 };
