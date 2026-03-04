@@ -68,6 +68,31 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
+
+
+/**
+ * Authorize roles - Check if user has required role
+ * Usage: authorize('admin', 'instructor')
+ */
+export const authorize = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      res.status(401);
+      throw new Error('Not authorized, no user');
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      res.status(403);
+      throw new Error(
+        `User role '${req.user.role}' is not authorized to access this route`
+      );
+    }
+
+    next();
+  };
+};
+
+
 // Optional auth - doesn't fail if no token, just sets req.user if valid token exists
 export const optionalAuth = asyncHandler(async (req, res, next) => {
   let token = null;
@@ -106,3 +131,4 @@ export const optionalAuth = asyncHandler(async (req, res, next) => {
   
   return next();
 });
+

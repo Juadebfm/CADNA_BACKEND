@@ -16,6 +16,8 @@ import resultRoutes from "./routes/resultRoutes.js";
 import { ensureDBConnection } from "./middleware/DatabaseMiddleware.js";
 import dotenv from "dotenv";
 import seedRoutes from "./routes/seedRoutes.js";
+import aiRoutes from "./routes/aiRoutes-vercel.js";
+import aiService from "./services/ai/AIService-vercel.js";
 
 dotenv.config();
 
@@ -32,7 +34,7 @@ app.use(
       "http://127.0.0.1:3000",
       "https://exam-genius-cadna-p7raj245e-ifeanyis-projects-30bb4f9f.vercel.app/",
       "https://*.vercel.app",
-      'https://exam-genius-cadna-five.vercel.app'
+      "https://exam-genius-cadna-five.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -98,6 +100,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/api/results", resultRoutes);
 app.use("/api/admin", seedRoutes);
+app.use("/api/ai", aiRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);
@@ -115,6 +118,9 @@ app.use(errorHandler);
 
     // Connect MongoDB (blocking)
     await connectDB();
+
+    // Initialize AI Service 
+    await aiService.initialize();
 
     // Start server only after DB is ready
     app.listen(PORT, () => {
