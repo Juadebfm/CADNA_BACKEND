@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  startExam,           
+  startExam,
   getExamSession,
   submitAnswer,
   submitExam,
@@ -17,28 +17,33 @@ import { protect } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
 
-// START EXAM
-router.post('/start/:examId', protect, startExam);
 
-// Get session
-router.get('/:id', protect, getExamSession);
+// START EXAM (no :id parameter)
+router.post('/start', protect, startExam);
+
+// USER SESSIONS (specific path before /:id)
 router.get('/user/:examId', protect, getUserSessions);
 
-// Submit answers
-router.post('/:id/answer', protect, submitAnswer);
-router.post('/:id/sync', protect, syncAnswers);
-
-// Submit exam
-router.post('/:id/submit', protect, submitExam);
-
-// Auto-submit exam
-router.post('/:id/auto-submit', protect, autoSubmitExam);
-
-// Flag suspicious activity
-router.post('/:id/flag-activity', protect, flagSuspiciousActivity);
-
-// Integrity event logging (NEW - Anti-cheating)
+//  INTEGRITY ROUTES  
 router.post('/:id/integrity-event', protect, logIntegrityEvent);
 router.get('/:id/integrity-events', protect, getIntegrityEvents);
+
+// SUBMIT ANSWER
+router.post('/:id/submit-answer', protect, submitAnswer);
+
+// SYNC ANSWERS
+router.post('/:id/sync', protect, syncAnswers);
+
+// SUBMIT EXAM
+router.post('/:id/submit', protect, submitExam);
+
+// AUTO-SUBMIT EXAM
+router.post('/:id/auto-submit', protect, autoSubmitExam);
+
+// FLAG SUSPICIOUS ACTIVITY
+router.post('/:id/flag-activity', protect, flagSuspiciousActivity);
+
+
+router.get('/:id', protect, getExamSession);
 
 export default router;

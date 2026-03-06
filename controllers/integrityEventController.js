@@ -1,49 +1,31 @@
 import asyncHandler from 'express-async-handler';
 import ExamSession from '../models/examSessionModel.js';
 
-// @desc    Log integrity event (tab switch, fullscreen exit, etc.)
-// @route   POST /api/exam-sessions/:sessionId/integrity-event
-// @access  Private (Student)
+// @desc    Log integrity event
+// @route   POST /api/exam-sessions/:id/integrity-event
+// @access  Private
 export const logIntegrityEvent = asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { eventType, metadata, timestamp, timeFromStart } = req.body;
+  const { eventType, timestamp, timeFromStart, severity, metadata } = req.body;
 
-  const session = await ExamSession.findById(sessionId);
+  console.log(' INTEGRITY EVENT RECEIVED:', {
+    sessionId: req.params.id,
+    eventType,
+    severity,
+    timestamp
+  });
+
+  // Find the exam session
+  const session = await ExamSession.findById(req.params.id);
 
   if (!session) {
+    console.error('Session not found:', req.params.id);
     return res.status(404).json({
       success: false,
-      message: 'Exam session not found'
+      error: 'Exam session not found'
     });
   }
 
-  // Verify student owns this session
-  if (session.student.toString() !== req.user._id.toString()) {
-    return res.status(403).json({
-      success: false,
-      message: 'Not authorized to access this session'
-    });
-  }
-
-  // Create integrity event
-  const integrityEvent = {
-    eventType,
-    timestamp: timestamp || new Date(),
-    timeFromStart: timeFromStart || 0,
-    metadata: metadata || {},
-    severity: metadata?.severity || 'medium',
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  };
-
-  // Add to session's integrity events array
-  if (!session.integrityEvents) {
-    session.integrityEvents = [];
-  }
-
-  session.integrityEvents.push(integrityEvent);
-
-  // Update violation counters
+  // Initialize violation fields if they don't exist
   if (!session.violations) {
     session.violations = {
       tabSwitches: 0,
@@ -54,69 +36,97 @@ export const logIntegrityEvent = asyncHandler(async (req, res) => {
     };
   }
 
-  // Increment appropriate counter
+  if (!session.integrityEvents) {
+    session.integrityEvents = [];
+  }
+
+  if (session.totalViolations === undefined || session.totalViolations === null) {
+    session.totalViolations = 0;
+  }
+
+  // Add the integrity event
+  session.integrityEvents.push({
+    eventType,
+    timestamp: new Date(timestamp),
+    timeFromStart,
+    severity,
+    metadata
+  });
+
+  // Increment the appropriate violation counter
   switch (eventType) {
     case 'tab_switch':
-      session.violations.tabSwitches += 1;
+      session.violations.tabSwitches = (session.violations.tabSwitches || 0) + 1;
+      console.log(' Tab switch detected. Total:', session.violations.tabSwitches);
       break;
     case 'window_blur':
-      session.violations.windowBlurs += 1;
+      session.violations.windowBlurs = (session.violations.windowBlurs || 0) + 1;
+      console.log('  window blur detected. Total:', session.violations.windowBlurs);
       break;
     case 'fullscreen_exit':
-      session.violations.fullscreenExits += 1;
+    case 'fullscreen_denied':
+      session.violations.fullscreenExits = (session.violations.fullscreenExits || 0) + 1;
+      console.log(' Fullscreen exit detected. Total:', session.violations.fullscreenExits);
       break;
     case 'copy_attempt':
     case 'paste_attempt':
-      session.violations.copyAttempts += 1;
+    case 'cut_attempt':
+      session.violations.copyAttempts = (session.violations.copyAttempts || 0) + 1;
+      console.log(' Copy/paste attempt detected. Total:', session.violations.copyAttempts);
       break;
     default:
-      session.violations.otherViolations += 1;
+      session.violations.otherViolations = (session.violations.otherViolations || 0) + 1;
+      console.log(' Other violation detected. Total:', session.violations.otherViolations);
   }
 
-  // Calculate total violations
-  session.totalViolations = Object.values(session.violations).reduce((a, b) => a + b, 0);
+  // Update total violations count
+  session.totalViolations = 
+    (session.violations.tabSwitches || 0) +
+    (session.violations.windowBlurs || 0) +
+    (session.violations.fullscreenExits || 0) +
+    (session.violations.copyAttempts || 0) +
+    (session.violations.otherViolations || 0);
 
-  // Flag session if too many violations
-  if (session.totalViolations >= 10) {
+  console.log(' TOTAL VIOLATIONS:', session.totalViolations);
+
+  // Auto-flag if violations >= 10
+  if (session.totalViolations >= 10 && !session.flagged) {
     session.flagged = true;
-    session.flagReason = `High violation count: ${session.totalViolations} violations detected`;
+    session.flagReason = `High violation count (${session.totalViolations} incidents)`;
+    console.log(' SESSION FLAGGED: High violation count');
   }
 
+  // Mark the fields as modified (important for nested objects)
+  session.markModified('violations');
+  session.markModified('integrityEvents');
+
+  // Save the session
   await session.save();
 
-  console.log(` Integrity event logged: ${eventType} for session ${sessionId}`);
+  console.log(' VIOLATION SAVED TO DATABASE');
 
   res.json({
     success: true,
-    message: 'Integrity event logged',
     data: {
       totalViolations: session.totalViolations,
-      flagged: session.flagged
+      violations: session.violations,
+      flagged: session.flagged,
+      eventLogged: true
     }
   });
 });
 
 // @desc    Get integrity events for a session
-// @route   GET /api/exam-sessions/:sessionId/integrity-events
-// @access  Private (Student/Instructor)
+// @route   GET /api/exam-sessions/:id/integrity-events
+// @access  Private
 export const getIntegrityEvents = asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-
-  const session = await ExamSession.findById(sessionId)
-    .select('integrityEvents violations totalViolations flagged');
+  const session = await ExamSession.findById(req.params.id)
+    .select('integrityEvents violations totalViolations flagged flagReason');
 
   if (!session) {
     return res.status(404).json({
       success: false,
-      message: 'Exam session not found'
-    });
-  }
-
-  // Students can only see their own sessions
-  if (req.user.role === 'student' && session.student.toString() !== req.user._id.toString()) {
-    return res.status(403).json({
-      success: false,
-      message: 'Not authorized'
+      error: 'Exam session not found'
     });
   }
 
@@ -124,9 +134,16 @@ export const getIntegrityEvents = asyncHandler(async (req, res) => {
     success: true,
     data: {
       integrityEvents: session.integrityEvents || [],
-      violations: session.violations || {},
+      violations: session.violations || {
+        tabSwitches: 0,
+        windowBlurs: 0,
+        fullscreenExits: 0,
+        copyAttempts: 0,
+        otherViolations: 0
+      },
       totalViolations: session.totalViolations || 0,
-      flagged: session.flagged || false
+      flagged: session.flagged || false,
+      flagReason: session.flagReason || null
     }
   });
 });

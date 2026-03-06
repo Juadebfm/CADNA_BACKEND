@@ -1013,12 +1013,12 @@ export const seedExams = asyncHandler(async (req, res) => {
           question:
             "Which vitamin is produced when skin is exposed to sunlight?",
           options: [
-            { text: "Vitamin D", value: "d", isCorrect: true },
-            { text: "Vitamin C", value: "c", isCorrect: false },
-            { text: "Vitamin A", value: "a", isCorrect: false },
-            { text: "Vitamin E", value: "e", isCorrect: false },
+            { text: "Vitamin D", value: "Vitamin d", isCorrect: true },
+            { text: "Vitamin C", value: "Vitamin c", isCorrect: false },
+            { text: "Vitamin A", value: "Vitamin a", isCorrect: false },
+            { text: "Vitamin E", value: "Vitamin e", isCorrect: false },
           ],
-          correctAnswer: "d",
+          correctAnswer: "Vitamin d",
           points: 2,
           difficulty: "medium",
         },

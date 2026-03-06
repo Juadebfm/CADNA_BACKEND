@@ -36,7 +36,7 @@ const connectDB = async () => {
     
     return conn;
   } catch (err) {
-    console.error('❌ MongoDB connection failed:', err.message);
+    console.error(' MongoDB connection failed:', err.message);
     
     if (process.env.NODE_ENV === 'production') {
       console.log('🔄 Retrying connection in 10 seconds...');

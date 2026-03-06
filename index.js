@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import connectDB from "./db/db.js";
+import mongoose from "mongoose";
 import { connectRedis } from "./db/redis.js";
 import { swaggerUi, specs } from "./swagger.js";
 import { errorHandler, notFound } from "./middleware/ErrorMiddleware.js";
@@ -16,6 +17,8 @@ import resultRoutes from "./routes/resultRoutes.js";
 import { ensureDBConnection } from "./middleware/DatabaseMiddleware.js";
 import dotenv from "dotenv";
 import seedRoutes from "./routes/seedRoutes.js";
+import aiRoutes from "./routes/aiRoutes-vercel.js";
+import aiService from "./services/ai/AIService-vercel.js";
 
 dotenv.config();
 
@@ -101,6 +104,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/api/results", resultRoutes);
 app.use("/api/admin", seedRoutes);
+app.use("/api/ai", aiRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);
@@ -118,6 +122,9 @@ app.use(errorHandler);
 
     // Connect MongoDB (blocking)
     await connectDB();
+
+    // Initialize AI Service 
+    await aiService.initialize();
 
     // Start server only after DB is ready
     app.listen(PORT, () => {
