@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import connectDB from "./db/db.js";
+import mongoose from "mongoose";
 import { connectRedis } from "./db/redis.js";
 import { swaggerUi, specs } from "./swagger.js";
 import { errorHandler, notFound } from "./middleware/ErrorMiddleware.js";
