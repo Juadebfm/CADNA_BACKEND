@@ -21,6 +21,10 @@ const router = express.Router();
 // START EXAM (no :id parameter)
 router.post('/start', protect, startExam);
 
+
+
+router.post('/api/exam-sessions/start', protect, startExam);
+
 // USER SESSIONS (specific path before /:id)
 router.get('/user/:examId', protect, getUserSessions);
 
