@@ -95,7 +95,12 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/exams", examRoutes);
+
+// exam-session routes are responsible for starting exams,
+// submitting answers and managing integrity checks.  These
+// are mounted after the main exam routes to avoid path conflicts.
 app.use("/api/exam-sessions", examSessionRoutes);
+
 app.use("/api/users", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/events", eventRoutes);
@@ -134,3 +139,6 @@ app.use(errorHandler);
     process.exit(1);
   }
 })();
+
+// export app for integration testing or external bootstrapping
+export default app;
