@@ -289,7 +289,7 @@ export const seedExams = asyncHandler(async (req, res) => {
         autoGrading: true,
       },
       schedule: {
-        startDate: new Date("2026-02-12T09:00:00"),
+        startDate: new Date("2026-03-14T09:00:00"),
         endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
@@ -561,7 +561,7 @@ export const seedExams = asyncHandler(async (req, res) => {
         autoGrading: true,
       },
       schedule: {
-        startDate: new Date("2026-02-12T09:00:00"),
+        startDate: new Date("2026-03-14T09:00:00"),
         endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
@@ -814,7 +814,7 @@ export const seedExams = asyncHandler(async (req, res) => {
         autoGrading: true,
       },
       schedule: {
-        startDate: new Date("2026-02-12T09:00:00"),
+        startDate: new Date("2026-03-14T09:00:00"),
         endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
@@ -1071,7 +1071,7 @@ export const seedExams = asyncHandler(async (req, res) => {
         autoGrading: true,
       },
       schedule: {
-        startDate: new Date("2026-02-12T09:00:00"),
+        startDate: new Date("2026-03-14T09:00:00"),
         endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
