@@ -67,10 +67,10 @@ export default function () {
   // Step 3 — Start exam session
   const startRes = http.post(
     `${BASE_URL}/api/exam-sessions/start`,
-    JSON.stringify({ examId: EXAM_ID }),
+    JSON.stringify({ examId: EXAM_ID, timezone: 'Africa/Lagos' }),
     { headers }
   );
-  console.log('Start exam:', startRes.status, startRes.body);
+//   console.log('Start exam:', startRes.status, startRes.body);
 
 
   check(startRes, {
