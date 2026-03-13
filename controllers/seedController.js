@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import Exam from "../models/examModel.js";
 import User from "../models/userModel.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
+import ExamSession from "../models/examSessionModel.js";
 
 // @desc    Seed database with sample exams
 // @route   POST /api/admin/seed-exams

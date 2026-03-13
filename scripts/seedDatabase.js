@@ -206,9 +206,9 @@ const seedDatabase = async () => {
         autoGrading: true
       },
       schedule: {
-        startDate: new Date("2025-12-01T00:00:00Z"),
-        endDate: new Date("2026-01-01T00:00:00Z"),
-        timezone: "UTC"
+        startDate: new Date("2026-03-13T00:00:00Z"),
+        endDate: new Date("2026-12-01T00:00:00Z"),
+        timezone: "Nigeria/Lagos"
       },
       enrolledStudents: [],
       isActive: true,
@@ -307,9 +307,9 @@ const seedDatabase = async () => {
         autoGrading: false
       },
       schedule: {
-        startDate: new Date("2025-01-15T09:00:00Z"),
-        endDate: new Date("2025-01-15T18:00:00Z"),
-        timezone: "America/New_York"
+        startDate: new Date("2026-03-13T09:00:00Z"),
+        endDate: new Date("2026-12-15T18:00:00Z"),
+        timezone: "Nigeria/Lagos"
       },
       enrolledStudents: [students[0]._id],
       isActive: true,
