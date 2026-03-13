@@ -44,7 +44,7 @@ const examSessionSchema = mongoose.Schema({
     passed: Boolean
   },
   
-  // Anti-cheating / Integrity tracking (NEW)
+  // Anti-cheating / Integrity tracking 
   integrityEvents: [{
     eventType: {
       type: String,
@@ -124,7 +124,7 @@ const examSessionSchema = mongoose.Schema({
   // Existing AI Analysis
   aiAnalysis: {
     suspiciousActivity: [{
-      type: String,
+      activityType: String,
       timestamp: Date,
       severity: {
         type: String,

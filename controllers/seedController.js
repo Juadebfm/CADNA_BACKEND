@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Exam from "../models/examModel.js";
 import User from "../models/userModel.js";
+import crypto from "crypto";
 
 // @desc    Seed database with sample exams
 // @route   POST /api/admin/seed-exams
@@ -43,6 +44,8 @@ export const seedExams = asyncHandler(async (req, res) => {
       description:
         "Test your mathematical abilities with this comprehensive exam covering algebra, calculus, and geometry.",
       instructor: instructor._id,
+      examLink: crypto.randomUUID(),
+      accessCode: crypto.randomBytes(4).toString("hex").toUpperCase(),
       questions: [
         {
           type: "multiple-choice",
@@ -75,7 +78,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "The sum of angles in a triangle is 180 degrees.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -119,7 +122,11 @@ export const seedExams = asyncHandler(async (req, res) => {
           type: "multiple-choice",
           question: "What is the quadratic formula?",
           options: [
-            { text: "x = (-b ± √(b²-4ac)) / 2a", value: "quadratic", isCorrect: true },
+            {
+              text: "x = (-b ± √(b²-4ac)) / 2a",
+              value: "quadratic",
+              isCorrect: true,
+            },
             { text: "x = -b / 2a", value: "simple", isCorrect: false },
             { text: "x = b² - 4ac", value: "discriminant", isCorrect: false },
             { text: "x = a² + b²", value: "pythagorean", isCorrect: false },
@@ -133,7 +140,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "A prime number has exactly two distinct factors.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -190,7 +197,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "The logarithm of 1 (log 1) equals 0.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -234,7 +241,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "All squares are rectangles.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -283,7 +290,7 @@ export const seedExams = asyncHandler(async (req, res) => {
       },
       schedule: {
         startDate: new Date("2026-02-12T09:00:00"),
-        endDate: new Date("2026-02-12T11:00:00"),
+        endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
     },
@@ -294,6 +301,8 @@ export const seedExams = asyncHandler(async (req, res) => {
       description:
         "Challenge your understanding of physics concepts, including mechanics, thermodynamics, and electromagnetism.",
       instructor: instructor._id,
+      examLink: crypto.randomUUID(),
+      accessCode: crypto.randomBytes(4).toString("hex").toUpperCase(),
       questions: [
         {
           type: "multiple-choice",
@@ -327,7 +336,7 @@ export const seedExams = asyncHandler(async (req, res) => {
             "Newton's first law states that an object at rest stays at rest unless acted upon by an external force.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -372,7 +381,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Energy can be created or destroyed.",
           options: [
             { text: "True", value: "true", isCorrect: false },
-            { text: "False", value: "false", isCorrect: true }
+            { text: "False", value: "false", isCorrect: true },
           ],
           correctAnswer: false,
           points: 1,
@@ -430,7 +439,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Sound travels faster in water than in air.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -440,10 +449,26 @@ export const seedExams = asyncHandler(async (req, res) => {
           type: "multiple-choice",
           question: "What is the first law of thermodynamics?",
           options: [
-            { text: "Energy cannot be created or destroyed", value: "first", isCorrect: true },
-            { text: "Entropy always increases", value: "second", isCorrect: false },
-            { text: "Heat flows from hot to cold", value: "zeroth", isCorrect: false },
-            { text: "Force equals mass times acceleration", value: "newton", isCorrect: false },
+            {
+              text: "Energy cannot be created or destroyed",
+              value: "first",
+              isCorrect: true,
+            },
+            {
+              text: "Entropy always increases",
+              value: "second",
+              isCorrect: false,
+            },
+            {
+              text: "Heat flows from hot to cold",
+              value: "zeroth",
+              isCorrect: false,
+            },
+            {
+              text: "Force equals mass times acceleration",
+              value: "newton",
+              isCorrect: false,
+            },
           ],
           correctAnswer: "first",
           points: 2,
@@ -488,7 +513,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "A convex mirror always forms a virtual image.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -537,7 +562,7 @@ export const seedExams = asyncHandler(async (req, res) => {
       },
       schedule: {
         startDate: new Date("2026-02-12T09:00:00"),
-        endDate: new Date("2026-02-12T11:00:00"),
+        endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
     },
@@ -548,6 +573,8 @@ export const seedExams = asyncHandler(async (req, res) => {
       description:
         "Assess your knowledge of chemistry, covering topics such as atomic structure, chemical reactions, and organic chemistry.",
       instructor: instructor._id,
+      examLink: crypto.randomUUID(),
+      accessCode: crypto.randomBytes(4).toString("hex").toUpperCase(),
       questions: [
         {
           type: "multiple-choice",
@@ -580,7 +607,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Acids have a pH less than 7.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -624,7 +651,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Noble gases are highly reactive.",
           options: [
             { text: "True", value: "true", isCorrect: false },
-            { text: "False", value: "false", isCorrect: true }
+            { text: "False", value: "false", isCorrect: true },
           ],
           correctAnswer: false,
           points: 1,
@@ -682,7 +709,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Sodium chloride (NaCl) is table salt.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -739,7 +766,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Water boils at 100°C at sea level.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -788,7 +815,7 @@ export const seedExams = asyncHandler(async (req, res) => {
       },
       schedule: {
         startDate: new Date("2026-02-12T09:00:00"),
-        endDate: new Date("2026-02-12T11:00:00"),
+        endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
     },
@@ -799,6 +826,8 @@ export const seedExams = asyncHandler(async (req, res) => {
       description:
         "Evaluate your understanding of biology, including cell biology, genetics, and ecology.",
       instructor: instructor._id,
+      examLink: crypto.randomUUID(),
+      accessCode: crypto.randomBytes(4).toString("hex").toUpperCase(),
       questions: [
         {
           type: "multiple-choice",
@@ -831,7 +860,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "DNA stands for Deoxyribonucleic Acid.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -875,7 +904,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "All living things are made of cells.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -888,7 +917,11 @@ export const seedExams = asyncHandler(async (req, res) => {
             { text: "Mitosis", value: "mitosis", isCorrect: false },
             { text: "Meiosis", value: "meiosis", isCorrect: false },
             { text: "Both A and B", value: "both", isCorrect: true },
-            { text: "Photosynthesis", value: "photosynthesis", isCorrect: false },
+            {
+              text: "Photosynthesis",
+              value: "photosynthesis",
+              isCorrect: false,
+            },
           ],
           correctAnswer: "both",
           points: 2,
@@ -932,7 +965,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Humans have four chambers in their heart.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -989,7 +1022,7 @@ export const seedExams = asyncHandler(async (req, res) => {
           question: "Vaccines help the immune system fight diseases.",
           options: [
             { text: "True", value: "true", isCorrect: true },
-            { text: "False", value: "false", isCorrect: false }
+            { text: "False", value: "false", isCorrect: false },
           ],
           correctAnswer: true,
           points: 1,
@@ -1039,9 +1072,11 @@ export const seedExams = asyncHandler(async (req, res) => {
       },
       schedule: {
         startDate: new Date("2026-02-12T09:00:00"),
-        endDate: new Date("2026-02-12T11:00:00"),
+        endDate: new Date("2026-12-12T11:00:00"),
       },
       enrolledStudents: studentIds,
+      examLink: crypto.randomUUID(),
+      accessCode: crypto.randomBytes(4).toString("hex").toUpperCase(),
     },
   ];
 

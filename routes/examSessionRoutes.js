@@ -19,9 +19,6 @@ const router = express.Router();
 
 
 // START EXAM (no :id parameter)
-router.post('/start', protect, startExam);
-
-
 
 router.post('/api/exam-sessions/start', protect, startExam);
 
