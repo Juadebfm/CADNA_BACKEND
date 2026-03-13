@@ -395,7 +395,7 @@ export const flagSuspiciousActivity = asyncHandler(async (req, res) => {
   }
 
   session.aiAnalysis.suspiciousActivity.push({
-    type: activityType,
+    activityType: activityType,
     timestamp: new Date(),
     severity
   });
@@ -497,10 +497,10 @@ const gradeExam = async (session) => {
       }
       
       mcGradedCount++;
-      console.log(`✅ MC Q${index + 1}: ${isCorrect ? 'Correct' : 'Wrong'} (${studentAnswer.points}/${question.points})`);
+      console.log(` MC Q${index + 1}: ${isCorrect ? 'Correct' : 'Wrong'} (${studentAnswer.points}/${question.points})`);
     } 
     else if (question.type === 'short-answer') {
-      // ✅ SHORT ANSWER - CASE-INSENSITIVE
+      //  SHORT ANSWER - CASE-INSENSITIVE
       isCorrect = studentAnswer.answer.toLowerCase().trim() === 
                   (question.correctAnswer || question.answer || '').toLowerCase().trim();
       
@@ -542,7 +542,7 @@ const gradeExam = async (session) => {
         });
 
         if (gradingResult.success) {
-          // ✅ AI GRADING SUCCESSFUL
+          //  AI GRADING SUCCESSFUL
           const aiScore = gradingResult.result.score;
           earnedPoints += aiScore;
           
@@ -597,7 +597,7 @@ const gradeExam = async (session) => {
   console.log(`✅ Grading complete: ${earnedPoints}/${totalPoints} (${percentage}%)`);
   console.log(`📊 Breakdown: ${mcGradedCount} MC, ${shortAnswerCount} Short Answer, ${aiGradedCount} Essays (AI)`);
 
-  // ✅ ALWAYS LOG EXAM GRADING TO AILOGS (even without essays!)
+  //  ALWAYS LOG EXAM GRADING TO AILOGS (even without essays!)
   try {
     console.log('📝 Logging exam grading operation to ailogs...');
     
@@ -606,7 +606,7 @@ const gradeExam = async (session) => {
       provider: aiGradedCount > 0 ? 'groq' : 'system',
       model: aiGradedCount > 0 ? 'llama-3.3-70b-versatile' : 'rule-based',
       
-      // ✅ CORRECT: request object
+      //  CORRECT: request object
       request: {
         inputText: `Exam: ${exam.title}`,
         inputLength: exam.title.length,
@@ -617,7 +617,7 @@ const gradeExam = async (session) => {
         maxScore: totalPoints
       },
       
-      // ✅ CORRECT: response object
+      //  CORRECT: response object
       response: {
         outputText: `Score: ${earnedPoints}/${totalPoints}`,
         outputLength: 50,
@@ -627,7 +627,7 @@ const gradeExam = async (session) => {
         hasAnalysis: false
       },
       
-      // ✅ CORRECT: performance object
+      //  CORRECT: performance object
       performance: {
         startTime: new Date(gradingStartTime),
         endTime: new Date(gradingEndTime),
@@ -637,7 +637,7 @@ const gradeExam = async (session) => {
         errorMessage: null
       },
       
-      // ✅ CORRECT: cost object
+      //  CORRECT: cost object
       cost: {
         promptTokens: 0,
         completionTokens: 0,
@@ -646,7 +646,7 @@ const gradeExam = async (session) => {
         isFree: true
       },
       
-      // ✅ CORRECT: user object
+      //  CORRECT: user object
       user: {
         _id: session.student,
         role: 'student',
@@ -654,12 +654,12 @@ const gradeExam = async (session) => {
         userAgent: null
       },
       
-      // ✅ CORRECT: context object
+      //  CORRECT: context object
       context: {
         sessionId: session._id,
         examId: exam._id,
         questionId: null,
-        userRole: 'student'  // ✅ FIXED
+        userRole: 'student'  
       }
     });
     
