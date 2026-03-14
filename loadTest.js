@@ -15,7 +15,7 @@ const users = [
 ];
 
 const BASE_URL = 'https://cadna-backend.onrender.com';
-const EXAM_ID = '694bceac24bc5f8226f6e238';
+const EXAM_ID = '694bceac24bc5f8226f6e25e';
 
 export const options = {
   stages: [
@@ -64,12 +64,21 @@ export default function () {
 
   sleep(1);
 
+  // Enroll in exam first
+http.post(
+  `${BASE_URL}/api/exams/${EXAM_ID}/enroll`,
+  null,
+  { headers }
+);
+
+sleep(1);
+
   // Step 3 — Start exam session
-  const startRes = http.post(
-    `${BASE_URL}/api/exams/${EXAM_ID}/start`,
-  JSON.stringify({}),
-    { headers }
-  );
+ const startRes = http.post(
+  `${BASE_URL}/api/exams/${EXAM_ID}/start`,
+  JSON.stringify({ timezone: 'Africa/Lagos' }),
+  { headers }
+);
 //   console.log('Start exam:', startRes.status, startRes.body);
 
 
