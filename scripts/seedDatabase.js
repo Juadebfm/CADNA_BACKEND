@@ -305,7 +305,7 @@ const seedDatabase = async () => {
         autoGrading: true,
       },
       schedule: {
-        startDate: new Date("2026-03-13T00:00:00Z"),
+        startDate: new Date("2026-03-15T00:00:00Z"),
         endDate: new Date("2026-12-01T00:00:00Z"),
         timezone: "Africa/Lagos",
       },
@@ -409,7 +409,7 @@ const seedDatabase = async () => {
         autoGrading: false,
       },
       schedule: {
-        startDate: new Date("2026-03-13T09:00:00Z"),
+        startDate: new Date("2026-03-15T09:00:00Z"),
         endDate: new Date("2026-12-15T18:00:00Z"),
         timezone: "Africa/Lagos",
       },
