@@ -65,9 +65,103 @@ const seedDatabase = async () => {
         university: "CADNA University",
         studentId: "STU002",
       },
+      // 10 test students for load testing
+      {
+        firstName: "Test",
+        lastName: "Student1",
+        email: "teststudent1@test.com",
+        phone: "08000000001",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student2",
+        email: "teststudent2@test.com",
+        phone: "08000000002",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student3",
+        email: "teststudent3@test.com",
+        phone: "08000000003",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student4",
+        email: "teststudent4@test.com",
+        phone: "08000000004",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student5",
+        email: "teststudent5@test.com",
+        phone: "08000000005",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student6",
+        email: "teststudent6@test.com",
+        phone: "08000000006",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student7",
+        email: "teststudent7@test.com",
+        phone: "08000000007",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student8",
+        email: "teststudent8@test.com",
+        phone: "08000000008",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student9",
+        email: "teststudent9@test.com",
+        phone: "08000000009",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
+      {
+        firstName: "Test",
+        lastName: "Student10",
+        email: "teststudent10@test.com",
+        phone: "08000000010",
+        password: "Test1234!",
+        role: "student",
+        university: "CADNA University",
+      },
     ]);
 
-    console.log("Created users");
+    console.log(`Created ${students.length} students`);
+
+    // Get all student IDs to enroll in exams
+    const allStudentIds = students.map((s) => s._id);
 
     // Create sample exam
     const examLink = crypto.randomUUID();
@@ -75,7 +169,8 @@ const seedDatabase = async () => {
 
     const sampleExam = await Exam.create({
       title: "Introduction to Computer Science",
-      description: "A mixed-format exam testing foundational knowledge in computing, programming, networks, and cybersecurity.",
+      description:
+        "A mixed-format exam testing foundational knowledge in computing, programming, networks, and cybersecurity.",
       instructor: instructor._id,
       examLink: examLink,
       accessCode: accessCode,
@@ -83,30 +178,32 @@ const seedDatabase = async () => {
         {
           _id: new mongoose.Types.ObjectId(),
           type: "multiple-choice",
-          question: "Which device is responsible for processing instructions in a computer?",
+          question:
+            "Which device is responsible for processing instructions in a computer?",
           options: [
             { text: "RAM", isCorrect: false },
             { text: "CPU", isCorrect: true },
             { text: "GPU", isCorrect: false },
-            { text: "ROM", isCorrect: false }
+            { text: "ROM", isCorrect: false },
           ],
           points: 2,
           difficulty: "easy",
-          category: "Hardware"
+          category: "Hardware",
         },
         {
           _id: new mongoose.Types.ObjectId(),
           type: "multiple-choice",
-          question: "Which of the following is the correct file extension for a JavaScript file?",
+          question:
+            "Which of the following is the correct file extension for a JavaScript file?",
           options: [
             { text: ".js", isCorrect: true },
             { text: ".jsx", isCorrect: false },
             { text: ".jv", isCorrect: false },
-            { text: ".script", isCorrect: false }
+            { text: ".script", isCorrect: false },
           ],
           points: 2,
           difficulty: "easy",
-          category: "Programming"
+          category: "Programming",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -114,11 +211,11 @@ const seedDatabase = async () => {
           question: "HTTP is a secure communication protocol.",
           options: [
             { text: "True", isCorrect: false },
-            { text: "False", isCorrect: true }
+            { text: "False", isCorrect: true },
           ],
           points: 1,
           difficulty: "medium",
-          category: "Networking"
+          category: "Networking",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -127,7 +224,7 @@ const seedDatabase = async () => {
           correctAnswer: "Random Access Memory",
           points: 2,
           difficulty: "easy",
-          category: "Hardware"
+          category: "Hardware",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -137,11 +234,11 @@ const seedDatabase = async () => {
             { text: "Phishing", isCorrect: false },
             { text: "Malware", isCorrect: false },
             { text: "DDoS", isCorrect: false },
-            { text: "Compiler", isCorrect: true }
+            { text: "Compiler", isCorrect: true },
           ],
           points: 2,
           difficulty: "medium",
-          category: "Cybersecurity"
+          category: "Cybersecurity",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -151,11 +248,11 @@ const seedDatabase = async () => {
             { text: "<javascript>", isCorrect: false },
             { text: "<script>", isCorrect: true },
             { text: "<link>", isCorrect: false },
-            { text: "<js>", isCorrect: false }
+            { text: "<js>", isCorrect: false },
           ],
           points: 2,
           difficulty: "easy",
-          category: "Web Development"
+          category: "Web Development",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -164,7 +261,7 @@ const seedDatabase = async () => {
           correctAnswer: "Scalability",
           points: 2,
           difficulty: "medium",
-          category: "Cloud"
+          category: "Cloud",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -172,28 +269,30 @@ const seedDatabase = async () => {
           question: "A router is used to connect multiple networks together.",
           options: [
             { text: "True", isCorrect: true },
-            { text: "False", isCorrect: false }
+            { text: "False", isCorrect: false },
           ],
           points: 1,
           difficulty: "easy",
-          category: "Networking"
+          category: "Networking",
         },
         {
           _id: new mongoose.Types.ObjectId(),
           type: "essay",
-          question: "Explain the difference between software and hardware. Provide at least two examples for each.",
+          question:
+            "Explain the difference between software and hardware. Provide at least two examples for each.",
           points: 5,
           difficulty: "medium",
-          category: "Computing"
+          category: "Computing",
         },
         {
           _id: new mongoose.Types.ObjectId(),
           type: "code",
-          question: "Write a JavaScript function named `addNumbers` that takes two parameters and returns their sum.",
+          question:
+            "Write a JavaScript function named `addNumbers` that takes two parameters and returns their sum.",
           points: 5,
           difficulty: "hard",
-          category: "Programming"
-        }
+          category: "Programming",
+        },
       ],
       settings: {
         timeLimit: 50,
@@ -203,17 +302,17 @@ const seedDatabase = async () => {
         allowReview: true,
         showResults: true,
         antiCheating: true,
-        autoGrading: true
+        autoGrading: true,
       },
       schedule: {
         startDate: new Date("2026-03-13T00:00:00Z"),
         endDate: new Date("2026-12-01T00:00:00Z"),
-        timezone: "Nigeria/Lagos"
+        timezone: "Africa/Lagos",
       },
-      enrolledStudents: [],
+      enrolledStudents: allStudentIds,
       isActive: true,
       category: "Computing",
-      tags: ["computers", "technology", "programming", "IT"]
+      tags: ["computers", "technology", "programming", "IT"],
     });
 
     console.log("Created sample exam");
@@ -224,7 +323,8 @@ const seedDatabase = async () => {
 
     const advancedExam = await Exam.create({
       title: "Advanced Web Development & Security",
-      description: "Comprehensive exam covering advanced web technologies, security practices, and modern development frameworks.",
+      description:
+        "Comprehensive exam covering advanced web technologies, security practices, and modern development frameworks.",
       instructor: instructor._id,
       examLink: examLink2,
       accessCode: accessCode2,
@@ -237,12 +337,12 @@ const seedDatabase = async () => {
             { text: "200", isCorrect: true },
             { text: "404", isCorrect: false },
             { text: "500", isCorrect: false },
-            { text: "302", isCorrect: false }
+            { text: "302", isCorrect: false },
           ],
           points: 3,
           difficulty: "easy",
           category: "Web Development",
-          media: "https://example.com/http-codes.png"
+          media: "https://example.com/http-codes.png",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -250,11 +350,11 @@ const seedDatabase = async () => {
           question: "HTTPS encrypts data in transit between client and server.",
           options: [
             { text: "True", isCorrect: true },
-            { text: "False", isCorrect: false }
+            { text: "False", isCorrect: false },
           ],
           points: 2,
           difficulty: "easy",
-          category: "Security"
+          category: "Security",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -263,7 +363,7 @@ const seedDatabase = async () => {
           correctAnswer: "Application Programming Interface",
           points: 2,
           difficulty: "easy",
-          category: "Web Development"
+          category: "Web Development",
         },
         {
           _id: new mongoose.Types.ObjectId(),
@@ -273,28 +373,30 @@ const seedDatabase = async () => {
             { text: "MySQL", isCorrect: false },
             { text: "PostgreSQL", isCorrect: false },
             { text: "MongoDB", isCorrect: true },
-            { text: "SQLite", isCorrect: false }
+            { text: "SQLite", isCorrect: false },
           ],
           points: 3,
           difficulty: "medium",
-          category: "Database"
+          category: "Database",
         },
         {
           _id: new mongoose.Types.ObjectId(),
           type: "essay",
-          question: "Explain the concept of Cross-Site Scripting (XSS) attacks and describe three methods to prevent them.",
+          question:
+            "Explain the concept of Cross-Site Scripting (XSS) attacks and describe three methods to prevent them.",
           points: 10,
           difficulty: "hard",
-          category: "Security"
+          category: "Security",
         },
         {
           _id: new mongoose.Types.ObjectId(),
           type: "code",
-          question: "Write a JavaScript function that validates an email address using regex.",
+          question:
+            "Write a JavaScript function that validates an email address using regex.",
           points: 8,
           difficulty: "hard",
-          category: "Programming"
-        }
+          category: "Programming",
+        },
       ],
       settings: {
         timeLimit: 90,
@@ -304,17 +406,23 @@ const seedDatabase = async () => {
         allowReview: false,
         showResults: false,
         antiCheating: true,
-        autoGrading: false
+        autoGrading: false,
       },
       schedule: {
         startDate: new Date("2026-03-13T09:00:00Z"),
         endDate: new Date("2026-12-15T18:00:00Z"),
-        timezone: "Nigeria/Lagos"
+        timezone: "Africa/Lagos",
       },
-      enrolledStudents: [students[0]._id],
+      enrolledStudents: allStudentIds,
       isActive: true,
       category: "Advanced Technology",
-      tags: ["web-development", "security", "advanced", "programming", "database"]
+      tags: [
+        "web-development",
+        "security",
+        "advanced",
+        "programming",
+        "database",
+      ],
     });
 
     console.log("Created advanced exam");
@@ -322,20 +430,27 @@ const seedDatabase = async () => {
     console.log("\n=== DATABASE SEEDED SUCCESSFULLY! ===");
     console.log("\n📚 SAMPLE EXAMS CREATED:");
     console.log(`\n1. ${sampleExam.title}`);
+    console.log(`   ID: ${sampleExam._id}`);
     console.log(`   Access Code: ${sampleExam.accessCode}`);
-    console.log(`   Link: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/exam/${sampleExam.examLink}`);
+    console.log(
+      `   Link: ${process.env.FRONTEND_URL || "http://localhost:5173"}/exam/${sampleExam.examLink}`
+    );
     console.log(`\n2. ${advancedExam.title}`);
+    console.log(`   ID: ${advancedExam._id}`);
     console.log(`   Access Code: ${advancedExam.accessCode}`);
-    console.log(`   Link: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/exam/${advancedExam.examLink}`);
+    console.log(
+      `   Link: ${process.env.FRONTEND_URL || "http://localhost:5173"}/exam/${advancedExam.examLink}`
+    );
     console.log(`\n👥 SAMPLE CREDENTIALS:`);
     console.log("Admin: admin@cadna.com / admin123");
     console.log("Instructor: instructor@cadna.com / instructor123");
-    console.log("Student 1: alice@student.com / student123 (enrolled in advanced exam)");
+    console.log("Student 1: alice@student.com / student123");
     console.log("Student 2: bob@student.com / student123");
+    console.log("Load Test Students: teststudent1-10@test.com / Test1234!");
     console.log("\n📋 INSTRUCTIONS:");
-    console.log("1. Login as a student (alice@student.com / student123)");
-    console.log("2. Click the exam link above");
-    console.log("3. You'll be auto-enrolled and can start the exam!");
+    console.log("1. Login as a student");
+    console.log("2. All students are auto-enrolled in both exams");
+    console.log("3. Click Take Exam to start!");
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {
