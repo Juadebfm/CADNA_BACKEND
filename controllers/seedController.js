@@ -10,15 +10,9 @@ import ExamSession from "../models/examSessionModel.js";
 // @access  Private (Admin/Instructor only)
 export const seedExams = asyncHandler(async (req, res) => {
   // Get an instructor from database
-  const instructor = await User.findOne({ role: "instructor" });
+  const instructor = await req.user;
 
-  if (!instructor) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "No instructor found in database. Please create an instructor account first.",
-    });
-  }
+ 
 
   // Get all students to auto-enroll them
   const students = await User.find({ role: "student" });
