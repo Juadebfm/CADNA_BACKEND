@@ -15,7 +15,7 @@ const users = [
 ];
 
 const BASE_URL = 'https://cadna-backend-kpgj.onrender.com';
-const EXAM_ID = '694bceac24bc5f8226f6e25e';
+const EXAM_ID = '69b83b54955515359f636063';
 
 export const options = {
   stages: [
