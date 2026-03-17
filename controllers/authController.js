@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import speakeasy from "speakeasy"; // TOTP 2FA
 import qrcode from "qrcode"; // for generating QR code dataURL
 import User from "../models/userModel.js";
+import Exam from "../models/examModel.js";
 import AuthLog from "../models/authLogModel.js";
 import { tokenBlacklist } from "../middleware/AuthMiddleware.js";
 import { signAccessToken, signRefreshToken } from "../utils/generateToken.js"; // helper to sign tokens
@@ -95,10 +96,19 @@ export const register = asyncHandler(async (req, res) => {
     university,
     studentId,
   });
+
   const accessToken = signAccessToken(user._id.toString(), user.role);
   const refreshToken = signRefreshToken(user._id.toString());
   user.refreshToken = refreshToken;
   await user.save();
+
+  // Auto-enroll new students in all active exams
+  if (user.role === "student") {
+    await Exam.updateMany(
+      { isActive: true },
+      { $addToSet: { enrolledStudents: user._id } }
+    );
+  }
 
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
 
@@ -170,9 +180,9 @@ export const login = asyncHandler(async (req, res) => {
   // Log successful login
   await AuthLog.create({
     userId: user._id,
-    action: 'login',
+    action: "login",
     ipAddress: req.ip,
-    userAgent: req.get('User-Agent')
+    userAgent: req.get("User-Agent"),
   });
 
   const safeUser = {
@@ -457,7 +467,7 @@ export const logout = asyncHandler(async (req, res) => {
   }
   return res.json({ success: true, message: "Logged out" });
 });
-//
+
 export const me = asyncHandler(async (req, res) => {
   if (!req.user)
     return res
