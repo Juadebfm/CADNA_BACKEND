@@ -19,6 +19,7 @@ import dotenv from "dotenv";
 import seedRoutes from "./routes/seedRoutes.js";
 import aiRoutes from "./routes/aiRoutes-vercel.js";
 import aiService from "./services/ai/AIService-vercel.js";
+import studyResourceRoutes from "./routes/studyResourceRoutes.js";
 
 dotenv.config();
 
@@ -111,6 +112,8 @@ app.use("/api/metrics", metricsRoutes);
 app.use("/api/results", resultRoutes);
 app.use("/api/admin", seedRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/study-resources", studyResourceRoutes);
+
 
 // 404 handler - must be after all routes
 app.use(notFound);
