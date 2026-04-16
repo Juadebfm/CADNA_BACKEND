@@ -153,7 +153,7 @@ const examSessionSchema = mongoose.Schema({
 });
 
 // Indexes
-examSessionSchema.index({ exam: 1, student: 1 }, { unique: true });
+examSessionSchema.index({ exam: 1, student: 1 });
 examSessionSchema.index({ student: 1, status: 1 });
 examSessionSchema.index({ flagged: 1 }); // NEW: Index for flagged sessions
 

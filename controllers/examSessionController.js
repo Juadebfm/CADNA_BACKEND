@@ -6,6 +6,7 @@ import redis from '../db/redis.js';
 import { createEvent } from './eventController.js';
 import aiOperations from '../services/ai/AIoperations-vercel.js';
 import aiLogger from '../services/ai/aiLogger.js';
+import StudyResource from '../models/studyResourceModel.js';
 
 // @desc    Start a new exam session
 // @route   POST /api/exam-sessions/start
@@ -434,34 +435,36 @@ const gradeExam = async (session) => {
   console.log(`🎓 Grading exam for session ${session._id}...`);
   const gradingStartTime = Date.now();
 
-  // Iterate through ALL exam questions
+  //  categoryMap for breakdown
+  const categoryMap = {};
+
   for (const [index, question] of exam.questions.entries()) {
     totalPoints += question.points || 1;
 
-    // Find if student answered this question
+    //  Track category using exam title as fallback
+    const cat = question.category || question.topic || exam.title || 'General';
+    if (!categoryMap[cat]) categoryMap[cat] = { correct: 0, total: 0 };
+    categoryMap[cat].total += 1;
+
     const studentAnswer = session.answers.find(
       a => a.questionId.toString() === question._id.toString()
     );
 
     if (!studentAnswer || !studentAnswer.answer || studentAnswer.answer.toString().trim() === '') {
-      // Question not answered
       unanswered++;
       incorrectAnswers++;
       continue;
     }
 
-    // Question was answered - check if correct
     let isCorrect = false;
 
     if (question.type === 'multiple-choice' || question.type === 'true-false') {
-      // ✅ MULTIPLE CHOICE - CASE-INSENSITIVE COMPARISON
       const studentAnswerLower = studentAnswer.answer.toString().toLowerCase().trim();
       
       if (question.correctAnswer) {
         const correctAnswerLower = question.correctAnswer.toString().toLowerCase().trim();
         isCorrect = studentAnswerLower === correctAnswerLower;
         
-        // Check against options if not directly correct
         if (!isCorrect && question.options) {
           const correctOption = question.options.find(opt => {
             const optValue = (opt.value || '').toString().toLowerCase().trim();
@@ -476,7 +479,6 @@ const gradeExam = async (session) => {
           }
         }
       } else {
-        // Check against isCorrect flag in options
         const correctOption = question.options.find(opt => opt.isCorrect === true);
         if (correctOption) {
           const correctValueLower = (correctOption.value || correctOption.text || '').toString().toLowerCase().trim();
@@ -490,6 +492,7 @@ const gradeExam = async (session) => {
         earnedPoints += question.points || 1;
         studentAnswer.isCorrect = true;
         studentAnswer.points = question.points || 1;
+        categoryMap[cat].correct += 1; //  track correct
       } else {
         incorrectAnswers++;
         studentAnswer.isCorrect = false;
@@ -500,7 +503,6 @@ const gradeExam = async (session) => {
       console.log(` MC Q${index + 1}: ${isCorrect ? 'Correct' : 'Wrong'} (${studentAnswer.points}/${question.points})`);
     } 
     else if (question.type === 'short-answer') {
-      //  SHORT ANSWER - CASE-INSENSITIVE
       isCorrect = studentAnswer.answer.toLowerCase().trim() === 
                   (question.correctAnswer || question.answer || '').toLowerCase().trim();
       
@@ -509,6 +511,7 @@ const gradeExam = async (session) => {
         earnedPoints += question.points || 1;
         studentAnswer.isCorrect = true;
         studentAnswer.points = question.points || 1;
+        categoryMap[cat].correct += 1; //  track correct
       } else {
         incorrectAnswers++;
         studentAnswer.isCorrect = false;
@@ -519,7 +522,6 @@ const gradeExam = async (session) => {
       console.log(`✅ Short Answer Q${index + 1}: ${isCorrect ? 'Correct' : 'Wrong'}`);
     }
     else if (question.type === 'essay') {
-      // 🤖 ESSAY - AI GRADING WITH GROQ (FREE!)
       try {
         console.log(`🤖 AI grading essay question ${index + 1}...`);
         
@@ -528,7 +530,7 @@ const gradeExam = async (session) => {
           answer: studentAnswer.answer,
           rubric: question.rubric || 'Grade based on accuracy, completeness, clarity, and relevance to the question',
           maxScore: question.points || 10,
-          provider: 'groq', // FREE Groq AI!
+          provider: 'groq',
           user: {
             _id: session.student,
             role: 'student',
@@ -542,7 +544,6 @@ const gradeExam = async (session) => {
         });
 
         if (gradingResult.success) {
-          //  AI GRADING SUCCESSFUL
           const aiScore = gradingResult.result.score;
           earnedPoints += aiScore;
           
@@ -551,37 +552,36 @@ const gradeExam = async (session) => {
           studentAnswer.aiGraded = true;
           studentAnswer.graded = true;
           studentAnswer.gradedAt = new Date();
-          
-          // Store AI details (optional)
           studentAnswer.aiDetails = {
             strengths: gradingResult.result.strengths,
             improvements: gradingResult.result.improvements
           };
+
+          // count as correct if >= 60% of points
+          if (aiScore >= (question.points || 10) * 0.6) {
+            categoryMap[cat].correct += 1;
+          }
           
           aiGradedCount++;
           console.log(`✅ Essay Q${index + 1} graded by AI: ${aiScore}/${question.points}`);
         } else {
-          // ❌ AI GRADING FAILED - Mark for manual grading
           console.error(`❌ AI grading failed for Q${index + 1}:`, gradingResult.error);
           studentAnswer.points = 0;
           studentAnswer.graded = false;
           studentAnswer.needsManualGrade = true;
         }
       } catch (error) {
-        // ❌ ERROR - Mark for manual grading
         console.error(`❌ AI grading error for Q${index + 1}:`, error.message);
         studentAnswer.points = 0;
         studentAnswer.graded = false;
         studentAnswer.needsManualGrade = true;
       }
     }
-    // Code questions require manual grading
   }
 
   const gradingEndTime = Date.now();
   const gradingDuration = gradingEndTime - gradingStartTime;
 
-  // Calculate final score
   const percentage = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
   const passed = percentage >= (exam.settings?.passingScore || exam.passingScore || 70);
 
@@ -594,19 +594,22 @@ const gradeExam = async (session) => {
 
   session.isGraded = true;
 
-  console.log(`✅ Grading complete: ${earnedPoints}/${totalPoints} (${percentage}%)`);
-  console.log(`📊 Breakdown: ${mcGradedCount} MC, ${shortAnswerCount} Short Answer, ${aiGradedCount} Essays (AI)`);
+  //  Build categoryBreakdown array
+  const categoryBreakdown = Object.entries(categoryMap).map(([category, data]) => ({
+    category,
+    correct: data.correct,
+    total: data.total,
+    percentage: Math.round((data.correct / data.total) * 100),
+  }));
 
-  //  ALWAYS LOG EXAM GRADING TO AILOGS (even without essays!)
+  console.log(`✅ Grading complete: ${earnedPoints}/${totalPoints} (${percentage}%)`);
+  console.log(`📊 Category Breakdown:`, categoryBreakdown);
+
   try {
-    console.log('📝 Logging exam grading operation to ailogs...');
-    
     const logResult = await aiLogger.logOperation({
       operation: aiGradedCount > 0 ? 'grade_essay' : 'grade_exam',
       provider: aiGradedCount > 0 ? 'groq' : 'system',
       model: aiGradedCount > 0 ? 'llama-3.3-70b-versatile' : 'rule-based',
-      
-      //  CORRECT: request object
       request: {
         inputText: `Exam: ${exam.title}`,
         inputLength: exam.title.length,
@@ -616,8 +619,6 @@ const gradeExam = async (session) => {
         hasRubric: false,
         maxScore: totalPoints
       },
-      
-      //  CORRECT: response object
       response: {
         outputText: `Score: ${earnedPoints}/${totalPoints}`,
         outputLength: 50,
@@ -626,8 +627,6 @@ const gradeExam = async (session) => {
         hasFeedback: false,
         hasAnalysis: false
       },
-      
-      //  CORRECT: performance object
       performance: {
         startTime: new Date(gradingStartTime),
         endTime: new Date(gradingEndTime),
@@ -636,8 +635,6 @@ const gradeExam = async (session) => {
         errorCode: null,
         errorMessage: null
       },
-      
-      //  CORRECT: cost object
       cost: {
         promptTokens: 0,
         completionTokens: 0,
@@ -645,24 +642,20 @@ const gradeExam = async (session) => {
         costUSD: 0,
         isFree: true
       },
-      
-      //  CORRECT: user object
       user: {
         _id: session.student,
         role: 'student',
         ipAddress: null,
         userAgent: null
       },
-      
-      //  CORRECT: context object
       context: {
         sessionId: session._id,
         examId: exam._id,
         questionId: null,
-        userRole: 'student'  
+        userRole: 'student'
       }
     });
-    
+
     if (logResult.success) {
       console.log('✅ Exam grading logged to ailogs');
     } else {
@@ -670,11 +663,19 @@ const gradeExam = async (session) => {
     }
   } catch (logError) {
     console.error('❌ Failed to log exam grading:', logError.message);
-    console.error('❌ Full error:', logError);
-    // Don't fail grading if logging fails
   }
 
-  // Create result record
+  //  Deactivate old generated resources for this exam subject
+await StudyResource.updateMany(
+  {
+    student: session.student,
+    subject: exam.title,
+    isActive: true,
+  },
+  { isActive: false }
+);
+
+  //  Save result with categoryBreakdown
   await Result.create({
     examSession: session._id,
     exam: exam._id,
@@ -689,8 +690,10 @@ const gradeExam = async (session) => {
       timeSpent: Math.floor((session.endTime - session.startTime) / 1000),
       questionsAttempted: session.answers.length,
       questionsCorrect: correctAnswers,
-      questionsIncorrect: incorrectAnswers,
-      questionsUnanswered: unanswered
+      averageTimePerQuestion: session.answers.length > 0
+        ? Math.floor((session.endTime - session.startTime) / 1000 / session.answers.length)
+        : 0,
+      categoryBreakdown, // include category breakdown in result analytics
     }
   });
 };
