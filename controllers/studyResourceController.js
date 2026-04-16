@@ -17,25 +17,17 @@ const callGroq = async (prompt) => {
       messages: [
         {
           role: 'system',
-          content:
-            'You are an educational AI assistant. Always respond with valid JSON only. No markdown, no explanation outside JSON.',
+          content: 'You are an educational AI assistant. Always respond with valid JSON only. No markdown, no explanation outside JSON.',
         },
-        {
-          role: 'user',
-          content: prompt,
-        },
+        { role: 'user', content: prompt },
       ],
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`Groq API error: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`Groq API error: ${response.status}`);
 
   const data = await response.json();
   const text = data.choices[0]?.message?.content || '{}';
-
-  // Strip markdown if present
   const clean = text.replace(/```json|```/g, '').trim();
   return JSON.parse(clean);
 };
@@ -59,7 +51,6 @@ const getWeakAreas = (results) => {
     }
   }
 
-  // Sort by lowest score first
   return weakAreas.sort((a, b) => a.score - b.score);
 };
 
@@ -110,20 +101,32 @@ const generateStudyGuide = async (subject, topic) => {
   return callGroq(prompt);
 };
 
-// Helper: Generate video lesson recommendation using Groq
+//  Helper: Search real YouTube videos using YouTube Data API
 const generateVideoLesson = async (subject, topic) => {
-  const prompt = `Suggest a video lesson for a student studying ${subject}, specifically on "${topic}".
-  
-  Respond with this exact JSON structure:
-  {
-    "videoTitle": "descriptive title for the video lesson",
-    "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "videoDuration": "estimated duration e.g. 15 mins",
-    "videoDescription": "2-3 sentence description of what this video covers",
-    "thumbnailUrl": "https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg"
-  }`;
+  const query = encodeURIComponent(`${subject} ${topic} tutorial lesson`);
+  const apiKey = process.env.YOUTUBE_API_KEY;
 
-  return callGroq(prompt);
+  const response = await fetch(
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&maxResults=1&relevanceLanguage=en&safeSearch=strict&key=${apiKey}`
+  );
+
+  if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
+
+  const data = await response.json();
+  const video = data.items?.[0];
+
+  if (!video) throw new Error('No YouTube video found for this topic');
+
+  const videoId = video.id.videoId;
+  const snippet = video.snippet;
+
+  return {
+    videoTitle: snippet.title,
+    videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    videoDuration: 'Watch on YouTube',
+    videoDescription: snippet.description || `A video lesson on ${topic} in ${subject}`,
+    thumbnailUrl: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url,
+  };
 };
 
 // Helper: Check if cached resources are still valid
@@ -138,45 +141,48 @@ const getCachedResources = async (studentId, subject, topic, type) => {
   });
 };
 
-// @desc    Get AI study suggestions and generate resources
+// @desc    Get AI study suggestions
 // @route   GET /api/study-resources/suggestions
 // @access  Private (Student)
 export const getStudySuggestions = asyncHandler(async (req, res) => {
   const studentId = req.user._id;
 
-  // Get student's recent results
   const recentResults = await Result.find({ student: studentId })
-    .populate('exam', 'title subject')
+    .populate('exam', 'title')
     .sort({ createdAt: -1 })
-    .limit(5);
+    .limit(20); // fetch more so we can deduplicate
 
   if (!recentResults.length) {
     return res.json({
       success: true,
       message: 'No exam results yet. Take some exams to get personalized suggestions.',
-      data: {
-        suggestions: [],
-        hasResults: false,
-      },
+      data: { suggestions: [], hasResults: false },
     });
   }
 
-  // Identify weak areas
-  const weakAreas = getWeakAreas(recentResults);
+  //  Keep only the most recent result per exam
+  const seenExams = new Set();
+  const deduplicated = [];
+
+  for (const result of recentResults) {
+    const examId = result.exam?._id?.toString();
+    if (examId && !seenExams.has(examId)) {
+      seenExams.add(examId);
+      deduplicated.push(result);
+    }
+    if (deduplicated.length === 5) break; // only last 5 unique exams
+  }
+
+  const weakAreas = getWeakAreas(deduplicated);
 
   if (!weakAreas.length) {
     return res.json({
       success: true,
       message: 'Great job! No weak areas detected. Keep it up!',
-      data: {
-        suggestions: [],
-        hasResults: true,
-        allPassing: true,
-      },
+      data: { suggestions: [], hasResults: true, allPassing: true },
     });
   }
 
-  // Return top 3 weak areas as suggestions
   const suggestions = weakAreas.slice(0, 3).map((area) => ({
     subject: area.subject,
     topic: area.topic,
@@ -187,11 +193,7 @@ export const getStudySuggestions = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: {
-      suggestions,
-      hasResults: true,
-      totalWeakAreas: weakAreas.length,
-    },
+    data: { suggestions, hasResults: true, totalWeakAreas: weakAreas.length },
   });
 });
 
@@ -213,11 +215,7 @@ export const getStudyResources = asyncHandler(async (req, res) => {
 
   const resources = await StudyResource.find(filter).sort({ createdAt: -1 });
 
-  res.json({
-    success: true,
-    data: resources,
-    count: resources.length,
-  });
+  res.json({ success: true, data: resources, count: resources.length });
 });
 
 // @desc    Get single study resource
@@ -230,16 +228,10 @@ export const getStudyResource = asyncHandler(async (req, res) => {
   });
 
   if (!resource) {
-    return res.status(404).json({
-      success: false,
-      message: 'Resource not found',
-    });
+    return res.status(404).json({ success: false, message: 'Resource not found' });
   }
 
-  res.json({
-    success: true,
-    data: resource,
-  });
+  res.json({ success: true, data: resource });
 });
 
 // @desc    Generate a study resource using AI
@@ -250,24 +242,13 @@ export const generateStudyResource = asyncHandler(async (req, res) => {
   const studentId = req.user._id;
 
   if (!subject || !topic || !type) {
-    return res.status(400).json({
-      success: false,
-      message: 'Subject, topic and type are required',
-    });
+    return res.status(400).json({ success: false, message: 'Subject, topic and type are required' });
   }
 
-  // Check cache first
   const cached = await getCachedResources(studentId, subject, topic, type);
-  if (cached) {
-    return res.json({
-      success: true,
-      data: cached,
-      fromCache: true,
-    });
-  }
+  if (cached) return res.json({ success: true, data: cached, fromCache: true });
 
   let content = {};
-  let aiSuggestionReason = `Generated based on your performance in ${subject}`;
 
   try {
     if (type === 'practice-quiz' || type === 'past-question') {
@@ -293,12 +274,11 @@ export const generateStudyResource = asyncHandler(async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to generate content with AI. Please try again.',
+      message: 'Failed to generate content. Please try again.',
       error: error.message,
     });
   }
 
-  // Save to database (cache)
   const resource = await StudyResource.create({
     student: studentId,
     subject,
@@ -307,18 +287,14 @@ export const generateStudyResource = asyncHandler(async (req, res) => {
     difficulty,
     content,
     aiSuggestion: {
-      reason: aiSuggestionReason,
+      reason: `Generated based on your performance in ${subject}`,
       priority: 'medium',
     },
     basedOnExam: examId || null,
     basedOnResult: resultId || null,
   });
 
-  res.status(201).json({
-    success: true,
-    data: resource,
-    fromCache: false,
-  });
+  res.status(201).json({ success: true, data: resource, fromCache: false });
 });
 
 // @desc    Auto generate resources for student based on weak areas
@@ -327,7 +303,6 @@ export const generateStudyResource = asyncHandler(async (req, res) => {
 export const autoGenerateResources = asyncHandler(async (req, res) => {
   const studentId = req.user._id;
 
-  // Get recent results
   const recentResults = await Result.find({ student: studentId })
     .populate('exam', 'title subject')
     .sort({ createdAt: -1 })
@@ -351,45 +326,72 @@ export const autoGenerateResources = asyncHandler(async (req, res) => {
   }
 
   const generated = [];
-  const topWeakAreas = weakAreas.slice(0, 2); // Generate for top 2 weak areas
+  const topWeakAreas = weakAreas.slice(0, 2);
 
   for (const area of topWeakAreas) {
-    // Check cache first
-    const cached = await getCachedResources(
-      studentId,
-      area.subject,
-      area.topic,
-      'practice-quiz'
-    );
+    const difficulty = area.score < 30 ? 'easy' : area.score < 50 ? 'medium' : 'hard';
+    const priority = area.score < 30 ? 'high' : area.score < 50 ? 'medium' : 'low';
 
-    if (cached) {
-      generated.push({ ...cached.toObject(), fromCache: true });
-      continue;
+    //  Generate practice quiz
+    const cachedQuiz = await getCachedResources(studentId, area.subject, area.topic, 'practice-quiz');
+    if (cachedQuiz) {
+      generated.push({ ...cachedQuiz.toObject(), fromCache: true });
+    } else {
+      try {
+        const quiz = await generatePracticeQuiz(area.subject, area.topic, difficulty);
+        const resource = await StudyResource.create({
+          student: studentId,
+          subject: area.subject,
+          topic: area.topic,
+          type: 'practice-quiz',
+          difficulty,
+          content: { questions: quiz.questions || [] },
+          aiSuggestion: {
+            reason: `Your score in ${area.topic} was ${area.score}%. Practice this to improve.`,
+            weakAreaScore: area.score,
+            priority,
+          },
+          basedOnExam: area.examId,
+          basedOnResult: area.resultId,
+        });
+        generated.push({ ...resource.toObject(), fromCache: false });
+      } catch (error) {
+        console.error(`Failed to generate quiz for ${area.topic}:`, error.message);
+      }
     }
 
-    try {
-      const difficulty = area.score < 30 ? 'easy' : area.score < 50 ? 'medium' : 'hard';
-      const quiz = await generatePracticeQuiz(area.subject, area.topic, difficulty);
-
-      const resource = await StudyResource.create({
-        student: studentId,
-        subject: area.subject,
-        topic: area.topic,
-        type: 'practice-quiz',
-        difficulty,
-        content: { questions: quiz.questions || [] },
-        aiSuggestion: {
-          reason: `Your score in ${area.topic} was ${area.score}%. Practice this to improve.`,
-          weakAreaScore: area.score,
-          priority: area.score < 30 ? 'high' : area.score < 50 ? 'medium' : 'low',
-        },
-        basedOnExam: area.examId,
-        basedOnResult: area.resultId,
-      });
-
-      generated.push({ ...resource.toObject(), fromCache: false });
-    } catch (error) {
-      console.error(`Failed to generate resource for ${area.topic}:`, error.message);
+    //  Generate real YouTube video lesson
+    const cachedVideo = await getCachedResources(studentId, area.subject, area.topic, 'video-lesson');
+    if (cachedVideo) {
+      generated.push({ ...cachedVideo.toObject(), fromCache: true });
+    } else {
+      try {
+        const video = await generateVideoLesson(area.subject, area.topic);
+        const resource = await StudyResource.create({
+          student: studentId,
+          subject: area.subject,
+          topic: area.topic,
+          type: 'video-lesson',
+          difficulty,
+          content: {
+            videoTitle: video.videoTitle,
+            videoUrl: video.videoUrl,
+            videoDuration: video.videoDuration,
+            videoDescription: video.videoDescription,
+            thumbnailUrl: video.thumbnailUrl,
+          },
+          aiSuggestion: {
+            reason: `Watch this to improve your understanding of ${area.topic}`,
+            weakAreaScore: area.score,
+            priority,
+          },
+          basedOnExam: area.examId,
+          basedOnResult: area.resultId,
+        });
+        generated.push({ ...resource.toObject(), fromCache: false });
+      } catch (error) {
+        console.error(`Failed to generate video for ${area.topic}:`, error.message);
+      }
     }
   }
 
@@ -410,17 +412,11 @@ export const deleteStudyResource = asyncHandler(async (req, res) => {
   });
 
   if (!resource) {
-    return res.status(404).json({
-      success: false,
-      message: 'Resource not found',
-    });
+    return res.status(404).json({ success: false, message: 'Resource not found' });
   }
 
   resource.isActive = false;
   await resource.save();
 
-  res.json({
-    success: true,
-    message: 'Resource deleted successfully',
-  });
+  res.json({ success: true, message: 'Resource deleted successfully' });
 });
