@@ -693,6 +693,7 @@ await StudyResource.updateMany(
       averageTimePerQuestion: session.answers.length > 0
         ? Math.floor((session.endTime - session.startTime) / 1000 / session.answers.length)
         : 0,
+        
       categoryBreakdown, // include category breakdown in result analytics
     }
   });
