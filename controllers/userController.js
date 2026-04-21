@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import Result from "../models/resultModel.js";
 import ExamSession from "../models/examSessionModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 const userSelect = "-password -refreshToken -twoFASecret -twoFATempSecret";
 const checkAccess = (reqUser, targetId) =>
@@ -31,13 +32,14 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     "phone",
     "university",
     "studentId",
+    "institution",
+    "purposeOfUse",
+    "department",
   ];
   const updateData = {};
-
   allowedFields.forEach((field) => {
     if (req.body[field] !== undefined) updateData[field] = req.body[field];
   });
-
   if (req.user.role === "admin" && req.body.role)
     updateData.role = req.body.role;
 
@@ -45,11 +47,78 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     new: true,
     runValidators: true,
   }).select(userSelect);
+
   res.json({
     success: true,
     message: "Profile updated successfully",
     data: updatedUser,
   });
+});
+
+export const uploadUserAvatar = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user)
+    return res.status(404).json({ success: false, message: "User not found" });
+  if (!checkAccess(req.user, req.params.id))
+    return res.status(403).json({ success: false, message: "Not authorized" });
+  if (!req.file)
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded" });
+
+  // Delete old avatar from Cloudinary if exists
+  if (user.avatarPublicId) {
+    await cloudinary.uploader.destroy(user.avatarPublicId).catch(() => {});
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.id,
+    {
+      avatar: req.file.path, // Cloudinary secure URL
+      avatarPublicId: req.file.filename, // Cloudinary public_id
+    },
+    { new: true },
+  ).select(userSelect);
+
+  res.json({
+    success: true,
+    message: "Avatar updated successfully",
+    data: updatedUser,
+  });
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user)
+    return res.status(404).json({ success: false, message: "User not found" });
+  if (!checkAccess(req.user, req.params.id))
+    return res.status(403).json({ success: false, message: "Not authorized" });
+
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword)
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "Current and new password are required",
+      });
+  if (newPassword.length < 6)
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "New password must be at least 6 characters",
+      });
+
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch)
+    return res
+      .status(400)
+      .json({ success: false, message: "Current password is incorrect" });
+
+  user.password = newPassword;
+  await user.save();
+  res.json({ success: true, message: "Password changed successfully" });
 });
 
 export const getUserResults = asyncHandler(async (req, res) => {
@@ -138,7 +207,6 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
   const { page = 1, limit = 10, role, search } = req.query;
   const query = {};
-
   if (role) query.role = role;
   if (search) {
     query.$or = [
@@ -181,10 +249,13 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user)
     return res.status(404).json({ success: false, message: "User not found" });
-  if (user.role === "admin" && req.user._id.toString() !== req.params.id) {
+  if (user.role === "admin" && req.user._id.toString() !== req.params.id)
     return res
       .status(403)
       .json({ success: false, message: "Cannot delete other admin users" });
+
+  if (user.avatarPublicId) {
+    await cloudinary.uploader.destroy(user.avatarPublicId).catch(() => {});
   }
 
   await User.findByIdAndDelete(req.params.id);
