@@ -13,7 +13,8 @@ import {
   getDailyCosts,
   checkCostLimit,
   testAIService,
-  switchProvider
+  switchProvider,
+   supportChat 
 } from '../controllers/aiController-vercel.js';
 import { protect, authorize } from '../middleware/AuthMiddleware.js';
 
@@ -51,5 +52,6 @@ router.get('/daily-costs', authorize('admin'), getDailyCosts);
 router.get('/cost-limit', authorize('admin'), checkCostLimit);
 router.post('/test', authorize('admin'), testAIService);
 router.post('/switch-provider', authorize('admin'), switchProvider);
+router.post('/support-chat', supportChat);
 
 export default router;

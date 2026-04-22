@@ -3,6 +3,7 @@ import aiOperations from '../services/ai/AIoperations-vercel.js';
 import aiService from '../services/ai/AIService-vercel.js';
 import ExamSession from '../models/examSessionModel.js';
 
+
 // @desc    Grade an essay answer
 // @route   POST /api/ai/grade-essay
 // @access  Private (Instructor/Admin)
@@ -432,4 +433,28 @@ export const switchProvider = asyncHandler(async (req, res) => {
     message: `Switched to ${provider}`,
     status: aiOperations.getStatus()
   });
+});
+
+export const supportChat = asyncHandler(async (req, res) => {
+  const { message, history = [] } = req.body;
+  if (!message) return res.status(400).json({ success: false, message: 'Message is required' });
+
+  // Build conversation context from history
+  const historyText = history.length
+    ? history.map(m => `${m.from === 'user' ? 'User' : 'Assistant'}: ${m.text}`).join('\n')
+    : '';
+
+  const result = await aiService.generate({
+    systemPrompt: `You are Assessbot, a helpful support assistant for Assessacad — an online exam platform. 
+You help students with exam issues, account problems, technical difficulties, and general platform questions.
+Be friendly, concise, and helpful. If you cannot resolve an issue, advise the student to email support@assessacad.com.
+Never make up information about specific exams or results.`,
+    prompt: historyText ? `Conversation so far:\n${historyText}\n\nUser: ${message}` : message,
+  });
+
+  if (!result.success) {
+    return res.status(500).json({ success: false, message: 'AI service unavailable. Please try again.' });
+  }
+
+  res.json({ success: true, reply: result.content });
 });
