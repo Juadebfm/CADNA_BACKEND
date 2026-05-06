@@ -331,8 +331,9 @@ export const autoGenerateResources = asyncHandler(async (req, res) => {
   for (const area of topWeakAreas) {
     const difficulty = area.score < 30 ? 'easy' : area.score < 50 ? 'medium' : 'hard';
     const priority = area.score < 30 ? 'high' : area.score < 50 ? 'medium' : 'low';
+    const reason = `Your score in ${area.topic} was ${area.score}%. Practice this to improve.`;
 
-    //  Generate practice quiz
+    // Practice Quiz
     const cachedQuiz = await getCachedResources(studentId, area.subject, area.topic, 'practice-quiz');
     if (cachedQuiz) {
       generated.push({ ...cachedQuiz.toObject(), fromCache: true });
@@ -346,11 +347,7 @@ export const autoGenerateResources = asyncHandler(async (req, res) => {
           type: 'practice-quiz',
           difficulty,
           content: { questions: quiz.questions || [] },
-          aiSuggestion: {
-            reason: `Your score in ${area.topic} was ${area.score}%. Practice this to improve.`,
-            weakAreaScore: area.score,
-            priority,
-          },
+          aiSuggestion: { reason, weakAreaScore: area.score, priority },
           basedOnExam: area.examId,
           basedOnResult: area.resultId,
         });
@@ -360,7 +357,7 @@ export const autoGenerateResources = asyncHandler(async (req, res) => {
       }
     }
 
-    //  Generate real YouTube video lesson
+    // YouTube Video Lesson
     const cachedVideo = await getCachedResources(studentId, area.subject, area.topic, 'video-lesson');
     if (cachedVideo) {
       generated.push({ ...cachedVideo.toObject(), fromCache: true });
@@ -391,6 +388,58 @@ export const autoGenerateResources = asyncHandler(async (req, res) => {
         generated.push({ ...resource.toObject(), fromCache: false });
       } catch (error) {
         console.error(`Failed to generate video for ${area.topic}:`, error.message);
+      }
+    }
+
+    //  Study Guide
+    const cachedGuide = await getCachedResources(studentId, area.subject, area.topic, 'study-guide');
+    if (cachedGuide) {
+      generated.push({ ...cachedGuide.toObject(), fromCache: true });
+    } else {
+      try {
+        const guide = await generateStudyGuide(area.subject, area.topic);
+        const resource = await StudyResource.create({
+          student: studentId,
+          subject: area.subject,
+          topic: area.topic,
+          type: 'study-guide',
+          difficulty,
+          content: {
+            summary: guide.summary,
+            keyPoints: guide.keyPoints,
+            detailedExplanation: guide.detailedExplanation,
+          },
+          aiSuggestion: { reason, weakAreaScore: area.score, priority },
+          basedOnExam: area.examId,
+          basedOnResult: area.resultId,
+        });
+        generated.push({ ...resource.toObject(), fromCache: false });
+      } catch (error) {
+        console.error(`Failed to generate study guide for ${area.topic}:`, error.message);
+      }
+    }
+
+    //  Past Question
+    const cachedPastQ = await getCachedResources(studentId, area.subject, area.topic, 'past-question');
+    if (cachedPastQ) {
+      generated.push({ ...cachedPastQ.toObject(), fromCache: true });
+    } else {
+      try {
+        const pastQ = await generatePracticeQuiz(area.subject, area.topic, difficulty);
+        const resource = await StudyResource.create({
+          student: studentId,
+          subject: area.subject,
+          topic: area.topic,
+          type: 'past-question',
+          difficulty,
+          content: { questions: pastQ.questions || [] },
+          aiSuggestion: { reason, weakAreaScore: area.score, priority },
+          basedOnExam: area.examId,
+          basedOnResult: area.resultId,
+        });
+        generated.push({ ...resource.toObject(), fromCache: false });
+      } catch (error) {
+        console.error(`Failed to generate past question for ${area.topic}:`, error.message);
       }
     }
   }
